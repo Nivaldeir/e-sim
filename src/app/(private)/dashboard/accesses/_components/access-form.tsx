@@ -43,7 +43,14 @@ const accessSchema = z.object({
 type AccessFormValues = z.infer<typeof accessSchema>;
 
 export function AccessFormModal({ onClose, data }: ModalProps<AccessFormModalData>) {
-  if (!data) return null;
+  const form = useZodForm(accessSchema, {
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      roleId: data?.roles[0]?.id || "",
+    },
+  });
 
   const createUserMutation = api.user.register.useMutation({
     onError: (error) => {
@@ -57,14 +64,7 @@ export function AccessFormModal({ onClose, data }: ModalProps<AccessFormModalDat
     },
   });
 
-  const form = useZodForm(accessSchema, {
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      roleId: data.roles[0]?.id || "",
-    },
-  });
+  if (!data) return null;
 
   const handleSubmit = async (values: AccessFormValues) => {
     try {

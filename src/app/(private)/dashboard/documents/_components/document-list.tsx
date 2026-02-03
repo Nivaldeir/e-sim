@@ -40,7 +40,7 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
 
   const groupedDocuments = useMemo(() => {
     if (groupBy !== "group") {
-      return { ungrouped: documents };
+      return { grouped: {}, ungrouped: documents };
     }
 
     const grouped: Record<string, SavedDocument[]> = {};

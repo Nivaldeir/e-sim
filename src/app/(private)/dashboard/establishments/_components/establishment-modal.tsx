@@ -48,8 +48,6 @@ export function EstablishmentModal({
   onClose,
   data,
 }: ModalProps<EstablishmentModalData>) {
-  if (!data) return null;
-
   const form = useZodForm(establishmentSchema, {
     defaultValues: {
       name: "",
@@ -58,6 +56,8 @@ export function EstablishmentModal({
       status: "active",
     },
   });
+
+  if (!data) return null;
 
   const handleSubmit = (values: EstablishmentFormValues) => {
     const newEstablishment: Establishment = {
@@ -172,6 +172,8 @@ export function EstablishmentModal({
     </div>
   );
 }
+
+
 
 
 

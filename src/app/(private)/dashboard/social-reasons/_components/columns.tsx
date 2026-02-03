@@ -3,9 +3,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
-import type { SocialReason } from "./mock-data";
 
-export const socialReasonColumns: ColumnDef<SocialReason>[] = [
+type SocialReasonTableData = {
+  id: string;
+  name: string;
+  shortName: string;
+  status: string;
+};
+
+export const socialReasonColumns: ColumnDef<SocialReasonTableData>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -46,6 +52,8 @@ export const socialReasonColumns: ColumnDef<SocialReason>[] = [
     },
   },
 ];
+
+
 
 
 

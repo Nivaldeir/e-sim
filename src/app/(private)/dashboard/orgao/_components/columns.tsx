@@ -3,9 +3,21 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
-import type { Orgao } from "./mock-data";
 
-export const orgaoColumns: ColumnDef<Orgao>[] = [
+type OrganizationType = "FEDERAL" | "ESTADUAL" | "MUNICIPAL" | "OUTROS";
+
+type OrgaoTableData = {
+  id: string;
+  name: string;
+  shortName: string;
+  type: OrganizationType;
+  city: string;
+  state: string;
+  status: string;
+  documentsCount: number;
+};
+
+export const orgaoColumns: ColumnDef<OrgaoTableData>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -22,15 +34,6 @@ export const orgaoColumns: ColumnDef<Orgao>[] = [
         </div>
       );
     },
-  },
-  {
-    accessorKey: "cnpj",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="CNPJ" className="justify-start flex text-start w-full" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-sm font-mono text-center flex justify-start">{row.original.cnpj}</span>
-    ),
   },
   {
     accessorKey: "type",
@@ -78,6 +81,8 @@ export const orgaoColumns: ColumnDef<Orgao>[] = [
     },
   },
 ];
+
+
 
 
 

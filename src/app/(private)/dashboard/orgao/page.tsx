@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/src/shared/components/global/ui";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Building2, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useOrgaoPage } from "./hooks/orgao.hook";
 
-export default function OrgaoPage() {
+function OrgaoPageContent() {
   const { table, isLoading, error, refetch, handleOpenNewOrgao } = useOrgaoPage();
 
   if (isLoading) {
@@ -81,6 +82,18 @@ export default function OrgaoPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function OrgaoPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <OrgaoPageContent />
+    </Suspense>
   );
 }
 

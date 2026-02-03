@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@/src/shared/components/global/ui";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Shield, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useAccessesPage } from "./hooks/accesses.hook";
 
-export default function AccessesPage() {
+function AccessesPageContent() {
   const { 
     table, 
     isLoading, 
@@ -128,5 +129,17 @@ export default function AccessesPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AccessesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <AccessesPageContent />
+    </Suspense>
   );
 }

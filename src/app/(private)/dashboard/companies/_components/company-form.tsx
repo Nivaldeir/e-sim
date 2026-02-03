@@ -50,19 +50,19 @@ const companySchema = z.object({
 type CompanyFormValues = z.infer<typeof companySchema>;
 
 export function CompanyModal({ onClose, data }: ModalProps<CompanyModalData>) {
+  const form = useZodForm(companySchema, {
+    defaultValues: {
+      name: data?.company?.name || "",
+      status: data?.company?.status || "ACTIVE",
+      cnpj: data?.company?.cnpj || "",
+      stateRegistration: data?.company?.stateRegistration || "",
+      municipalRegistration: data?.company?.municipalRegistration || "",
+    },
+  });
+
   if (!data) return null;
 
   const isEditing = !!data.company;
-
-  const form = useZodForm(companySchema, {
-    defaultValues: {
-      name: data.company?.name || "",
-      status: data.company?.status || "ACTIVE",
-      cnpj: data.company?.cnpj || "",
-      stateRegistration: data.company?.stateRegistration || "",
-      municipalRegistration: data.company?.municipalRegistration || "",
-    },
-  });
 
   const createMutation = api.company.create.useMutation({
     onSuccess: () => {

@@ -63,10 +63,6 @@ const accessFormSchema = z.object({
 type AccessFormValues = z.infer<typeof accessFormSchema>;
 
 export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
-  if (!data) return null;
-
-  const { user, roles, onSuccess } = data;
-
   const assignRoleMutation = api.access.assignRole.useMutation();
   const removeRoleMutation = api.access.removeRole.useMutation();
   const assignCompanyMutation = api.access.assignCompany.useMutation();
@@ -81,9 +77,9 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
 
   const form = useZodForm(accessFormSchema, {
     defaultValues: {
-      roleIds: user.roles.map((r) => r.id),
-      companies: (user.companies && user.companies.length > 0)
-        ? user.companies.map((c) => ({
+      roleIds: data?.user.roles.map((r) => r.id) || [],
+      companies: (data?.user.companies && data.user.companies.length > 0)
+        ? data.user.companies.map((c) => ({
             companyId: c.id,
             code: c.code || undefined,
           }))
@@ -92,7 +88,29 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
   });
 
   const selectedRoleIds = form.watch("roleIds");
-  const currentRoleIds = React.useMemo(() => user.roles.map((r) => r.id), [user.roles]);
+  const currentRoleIds = React.useMemo(() => data?.user.roles.map((r) => r.id) || [], [data?.user.roles]);
+
+  const getPermissionsForRole = React.useCallback((roleId: string) => {
+    const role = data?.roles?.find((r) => r.id === roleId);
+    return role?.permissions || [];
+  }, [data?.roles]);
+
+  const allSelectedPermissions = React.useMemo(() => {
+    const permissionMap = new Map<string, { resource: string; action: string }>();
+    selectedRoleIds.forEach((roleId) => {
+      getPermissionsForRole(roleId).forEach((perm) => {
+        permissionMap.set(perm.id, {
+          resource: perm.resource,
+          action: perm.action,
+        });
+      });
+    });
+    return Array.from(permissionMap.values());
+  }, [selectedRoleIds, getPermissionsForRole]);
+
+  if (!data) return null;
+
+  const { user, roles, onSuccess } = data;
 
   const handleSubmit = async (values: AccessFormValues) => {
     try {
@@ -152,24 +170,6 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
       form.setError("root", { message: "Erro ao atualizar acessos. Tente novamente." });
     }
   };
-
-  const getPermissionsForRole = (roleId: string) => {
-    const role = roles?.find((r) => r.id === roleId);
-    return role?.permissions || [];
-  };
-
-  const allSelectedPermissions = React.useMemo(() => {
-    const permissionMap = new Map<string, { resource: string; action: string }>();
-    selectedRoleIds.forEach((roleId) => {
-      getPermissionsForRole(roleId).forEach((perm) => {
-        permissionMap.set(perm.id, {
-          resource: perm.resource,
-          action: perm.action,
-        });
-      });
-    });
-    return Array.from(permissionMap.values());
-  }, [selectedRoleIds, roles]);
 
   return (
     <div className="max-h-[90vh] overflow-y-auto p-6">

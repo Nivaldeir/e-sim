@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/src/shared/components/global/ui";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Building2, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useSocialReasonsPage } from "./hooks/social-reasons.hook";
 
-export default function SocialReasonsPage() {
+function SocialReasonsPageContent() {
   const { table, isLoading, error, refetch, handleOpenNewReason } = useSocialReasonsPage();
 
   if (isLoading) {
@@ -92,6 +93,18 @@ export default function SocialReasonsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SocialReasonsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SocialReasonsPageContent />
+    </Suspense>
   );
 }
 

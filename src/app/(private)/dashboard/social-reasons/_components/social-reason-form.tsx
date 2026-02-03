@@ -46,17 +46,17 @@ export function SocialReasonModal({
   onClose,
   data,
 }: ModalProps<SocialReasonModalData>) {
+  const form = useZodForm(socialReasonSchema, {
+    defaultValues: {
+      name: data?.socialReason?.name || "",
+      shortName: data?.socialReason?.shortName || "",
+      status: data?.socialReason?.status || "ACTIVE",
+    },
+  });
+
   if (!data) return null;
 
   const isEditing = !!data.socialReason;
-
-  const form = useZodForm(socialReasonSchema, {
-    defaultValues: {
-      name: data.socialReason?.name || "",
-      shortName: data.socialReason?.shortName || "",
-      status: data.socialReason?.status || "ACTIVE",
-    },
-  });
 
   const createMutation = api.socialReason.create.useMutation({
     onSuccess: () => {

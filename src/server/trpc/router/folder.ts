@@ -10,7 +10,7 @@ export const folderRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const userId = (ctx.session?.user as any)?.id;
-      const isAdmin = ctx.session?.user?.roles?.includes("ADMINISTRADOR");
+      const isAdmin = (ctx.session?.user as any)?.roles?.includes("ADMINISTRADOR");
 
       const folders = await ctx.prisma.folder.findMany({
         where: {
@@ -33,7 +33,7 @@ export const folderRouter = router({
 
   getTree: protectedProcedure.query(async ({ ctx }) => {
     const userId = (ctx.session?.user as any)?.id;
-    const isAdmin = ctx.session?.user?.roles?.includes("ADMINISTRADOR");
+    const isAdmin = (ctx.session?.user as any)?.roles?.includes("ADMINISTRADOR");
 
     // Buscar todas as pastas
     const folders = await ctx.prisma.folder.findMany({

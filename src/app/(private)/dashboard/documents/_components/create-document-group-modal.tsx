@@ -32,14 +32,14 @@ export function CreateDocumentGroupModal({
   onClose,
   data,
 }: ModalProps<CreateDocumentGroupModalData>) {
-  if (!data) return null;
-
   const form = useZodForm(createDocumentGroupSchema, {
     defaultValues: {
       name: "",
       description: "",
     },
   });
+
+  if (!data) return null;
 
   const createGroupMutation = api.documentGroup.create.useMutation({
     onSuccess: (group) => {
@@ -140,6 +140,8 @@ export function CreateDocumentGroupModal({
     </div>
   );
 }
+
+
 
 
 

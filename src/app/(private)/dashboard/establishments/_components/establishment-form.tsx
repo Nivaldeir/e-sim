@@ -62,10 +62,6 @@ export function EstablishmentModal({
   onClose,
   data,
 }: ModalProps<EstablishmentModalData>) {
-  if (!data) return null;
-
-  const isEditing = !!data.establishment;
-
   // Buscar empresas para o select
   const { data: companiesData } = api.company.list.useQuery({
     page: 1,
@@ -76,18 +72,22 @@ export function EstablishmentModal({
 
   const form = useZodForm(establishmentSchema, {
     defaultValues: {
-      companyId: data.establishment?.companyId || "",
-      name: data.establishment?.name || "",
-      code: data.establishment?.code || "",
-      cnpj: data.establishment?.cnpj || "",
-      address: data.establishment?.address || "",
-      district: data.establishment?.district || "",
-      city: data.establishment?.city || "",
-      state: data.establishment?.state || "",
-      zipCode: data.establishment?.zipCode || "",
-      status: data.establishment?.status || "ACTIVE",
+      companyId: data?.establishment?.companyId || "",
+      name: data?.establishment?.name || "",
+      code: data?.establishment?.code || "",
+      cnpj: data?.establishment?.cnpj || "",
+      address: data?.establishment?.address || "",
+      district: data?.establishment?.district || "",
+      city: data?.establishment?.city || "",
+      state: data?.establishment?.state || "",
+      zipCode: data?.establishment?.zipCode || "",
+      status: data?.establishment?.status || "ACTIVE",
     },
   });
+
+  if (!data) return null;
+
+  const isEditing = !!data.establishment;
 
   const createMutation = api.establishment.create.useMutation({
     onSuccess: () => {

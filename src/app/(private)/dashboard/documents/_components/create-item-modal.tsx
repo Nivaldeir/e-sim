@@ -36,15 +36,15 @@ const createItemSchema = z.object({
 type CreateItemFormValues = z.infer<typeof createItemSchema>;
 
 export function CreateItemModal({ onClose, data }: ModalProps<CreateItemModalData>) {
-  if (!data) return null;
-
-  const { type, onSuccess } = data;
-
   const form = useZodForm(createItemSchema, {
     defaultValues: {
       name: "",
     },
   });
+
+  if (!data) return null;
+
+  const { type, onSuccess } = data;
 
   const handleSubmit = async (values: CreateItemFormValues) => {
     onSuccess(values.name, type);

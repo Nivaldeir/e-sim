@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useDocumentTypesPage } from "./hooks/document-types.hook";
 import { Button } from "@/src/shared/components/global/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { TemplateCard } from "./_components/template-card";
 
-export default function DocumentTypesPage() {
+function DocumentTypesPageContent() {
   const {
     templates,
     isLoading,
@@ -57,6 +58,18 @@ export default function DocumentTypesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DocumentTypesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <DocumentTypesPageContent />
+    </Suspense>
   );
 }
 

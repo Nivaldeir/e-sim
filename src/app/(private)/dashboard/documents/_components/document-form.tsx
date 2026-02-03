@@ -53,12 +53,11 @@ export function DocumentFormModal({
   onClose,
   data,
 }: ModalProps<DocumentModalData>) {
-  if (!data) return null;
-
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [customFieldsData, setCustomFieldsData] = useState<Record<string, string>>({});
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: templatesData, isLoading: templatesLoading } = api.documentTemplate.list.useQuery({
@@ -112,6 +111,8 @@ export function DocumentFormModal({
       observations: "",
     },
   });
+
+  if (!data) return null;
 
   // Mutation para criar documento
   const createDocumentMutation = api.document.create.useMutation({
@@ -492,8 +493,6 @@ export function DocumentFormModal({
                 control={form.control}
                 name="groupId"
                 render={({ field }) => {
-                  const [isSelectOpen, setIsSelectOpen] = useState(false);
-                  
                   return (
                     <FormItem className="flex-1 w-full">
                       <FormLabel>Grupo de Documentos</FormLabel>

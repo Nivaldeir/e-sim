@@ -138,7 +138,7 @@ export default function PublicDocumentGroupPage() {
                           <User className="h-3 w-3" />
                           Responsável
                         </span>
-                        <span className="text-sm font-medium truncate" title={doc.responsible?.email}>
+                        <span className="text-sm font-medium truncate" title={doc.responsible?.email || undefined}>
                           {doc.responsible?.name || "-"}
                         </span>
                       </div>

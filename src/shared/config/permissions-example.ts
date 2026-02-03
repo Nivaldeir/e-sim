@@ -69,7 +69,7 @@ export const exampleRouter4 = router({
 // ============================================
 // 3. USO NO FRONTEND (React Components)
 // ============================================
-
+/*
 import { usePermissions } from "@/src/shared/hook/use-permissions";
 import { PermissionGuard } from "@/src/shared/components/permissions/permission-guard";
 
@@ -83,6 +83,8 @@ function MyComponent() {
 
   return <button>Criar Documento</button>;
 }
+
+// Nota: Em componentes reais, todos os hooks devem ser chamados antes de qualquer early return
 
 // Exemplo 2: Componente PermissionGuard
 function MyPage() {
@@ -108,6 +110,7 @@ function MyPage() {
     </div>
   );
 }
+*/
 
 // ============================================
 // 4. CONFIGURAÇÃO DE ROTAS

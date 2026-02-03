@@ -24,7 +24,7 @@ import {
 } from "@/src/shared/components/global/ui/select";
 import { api } from "@/src/shared/context/trpc-context";
 import { Plus, X, Trash2 } from "lucide-react";
-import type { ModalProps } from "@/src/shared/context/modal-context";
+import type { ModalProps } from "@/src/shared/types/modal";
 
 const fieldTypeOptions = [
   { value: "TEXT", label: "Texto" },
@@ -39,11 +39,13 @@ const fieldTypeOptions = [
   { value: "FILE", label: "Arquivo" },
 ];
 
+type FieldType = "TEXT" | "NUMBER" | "DATE" | "EMAIL" | "CPF" | "CNPJ" | "PHONE" | "TEXTAREA" | "SELECT" | "FILE";
+
 type Field = {
   id: string;
   name: string;
   label: string;
-  type: string;
+  type: FieldType;
   required: boolean;
   order: number;
   options?: string[];
@@ -83,7 +85,7 @@ export function TemplateFormModal({
       id: f.id || `field-${index}`,
       name: f.name,
       label: f.label,
-      type: f.type,
+      type: f.type as FieldType,
       required: f.required,
       order: f.order,
       options: f.options || [],
@@ -159,7 +161,7 @@ export function TemplateFormModal({
     const fieldsData = fields.map((field, index) => ({
       name: field.name,
       label: field.label,
-      type: field.type,
+      type: field.type as FieldType,
       required: field.required,
       order: index,
       options: field.type === "SELECT" ? field.options || [] : undefined,
@@ -274,7 +276,7 @@ export function TemplateFormModal({
             {fields.length === 0 ? (
               <div className="p-8 text-center border-2 border-dashed rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  Nenhum campo adicionado. Clique em "Adicionar Campo" para começar.
+                  Nenhum campo adicionado. Clique em &quot;Adicionar Campo&quot; para começar.
                 </p>
               </div>
             ) : (
@@ -334,7 +336,7 @@ export function TemplateFormModal({
                         <Select
                           value={field.type}
                           onValueChange={(value) =>
-                            updateField(field.id, { type: value })
+                            updateField(field.id, { type: value as FieldType })
                           }
                         >
                           <SelectTrigger>

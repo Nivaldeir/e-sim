@@ -11,7 +11,7 @@ export const fileRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const userId = (ctx.session?.user as any)?.id;
-      const isAdmin = ctx.session?.user?.roles?.includes("ADMINISTRADOR");
+      const isAdmin = (ctx.session?.user as any)?.roles?.includes("ADMINISTRADOR");
 
       const files = await ctx.prisma.file.findMany({
         where: {
@@ -176,7 +176,7 @@ export const fileRouter = router({
 
   stats: protectedProcedure.query(async ({ ctx }) => {
     const userId = (ctx.session?.user as any)?.id;
-    const isAdmin = ctx.session?.user?.roles?.includes("ADMINISTRADOR");
+    const isAdmin = (ctx.session?.user as any)?.roles?.includes("ADMINISTRADOR");
 
     const where = isAdmin ? {} : { createdBy: userId };
 

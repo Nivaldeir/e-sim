@@ -4,9 +4,18 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
 import { FileText } from "lucide-react";
-import type { Establishment } from "./mock-data";
 
-export const establishmentColumns: ColumnDef<Establishment>[] = [
+type EstablishmentTableData = {
+  id: string;
+  name: string;
+  code: string;
+  address: string;
+  status: string;
+  filesCount: number;
+  company: string;
+};
+
+export const establishmentColumns: ColumnDef<EstablishmentTableData>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (

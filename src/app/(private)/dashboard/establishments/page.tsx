@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/shared/components/global/ui";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Building2, FileText, Folder, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useEstablishmentsPage } from "./hooks/establishments.hook";
 
-export default function EstablishmentsPage() {
+function EstablishmentsPageContent() {
   const { establishments, table, isLoading, error, refetch, handleOpenNewEstablishment, handleEditEstablishment } = useEstablishmentsPage();
 
   if (isLoading) {
@@ -151,6 +152,18 @@ export default function EstablishmentsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function EstablishmentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <EstablishmentsPageContent />
+    </Suspense>
   );
 }
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 
 const createDocumentSchema = z.object({
@@ -208,6 +209,7 @@ export const documentRouter = router({
           issueDate: issueDate ? new Date(issueDate) : null,
           expirationDate: expirationDate ? new Date(expirationDate) : null,
           alertDate: alertDate ? new Date(alertDate) : null,
+          customData: data.customData === null ? Prisma.JsonNull : data.customData,
         },
         include: {
           template: true,
@@ -239,14 +241,28 @@ export const documentRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { id, expirationDate, alertDate, issueDate, ...data } = input;
 
+      const updateData: any = {};
+      
+      if (data.templateId !== undefined) updateData.templateId = data.templateId;
+      if (data.organizationId !== undefined) updateData.organizationId = data.organizationId;
+      if (data.companyId !== undefined) updateData.companyId = data.companyId;
+      if (data.establishmentId !== undefined) updateData.establishmentId = data.establishmentId;
+      if (data.responsibleId !== undefined) updateData.responsibleId = data.responsibleId;
+      if (data.chiefId !== undefined) updateData.chiefId = data.chiefId;
+      if (data.classification !== undefined) updateData.classification = data.classification;
+      if (data.groupId !== undefined) updateData.groupId = data.groupId;
+      if (data.observations !== undefined) updateData.observations = data.observations;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.customData !== undefined) {
+        updateData.customData = data.customData === null ? Prisma.JsonNull : data.customData;
+      }
+      if (issueDate) updateData.issueDate = new Date(issueDate);
+      if (expirationDate) updateData.expirationDate = new Date(expirationDate);
+      if (alertDate) updateData.alertDate = new Date(alertDate);
+
       const document = await ctx.prisma.document.update({
         where: { id },
-        data: {
-          ...data,
-          ...(issueDate && { issueDate: new Date(issueDate) }),
-          ...(expirationDate && { expirationDate: new Date(expirationDate) }),
-          ...(alertDate && { alertDate: new Date(alertDate) }),
-        },
+        data: updateData,
         include: {
           template: true,
           organization: true,

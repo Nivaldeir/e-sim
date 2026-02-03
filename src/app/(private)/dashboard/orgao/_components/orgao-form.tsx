@@ -57,24 +57,24 @@ const orgaoSchema = z.object({
 type OrgaoFormValues = z.infer<typeof orgaoSchema>;
 
 export function OrgaoModal({ onClose, data }: ModalProps<OrgaoModalData>) {
+  const form = useZodForm(orgaoSchema, {
+    defaultValues: {
+      name: data?.organization?.name || "",
+      shortName: data?.organization?.shortName || "",
+      cnpj: data?.organization?.cnpj || "",
+      type: data?.organization?.type || "OUTROS",
+      address: data?.organization?.address || "",
+      district: data?.organization?.district || "",
+      city: data?.organization?.city || "",
+      state: data?.organization?.state || "",
+      zipCode: data?.organization?.zipCode || "",
+      status: data?.organization?.status || "ACTIVE",
+    },
+  });
+
   if (!data) return null;
 
   const isEditing = !!data.organization;
-
-  const form = useZodForm(orgaoSchema, {
-    defaultValues: {
-      name: data.organization?.name || "",
-      shortName: data.organization?.shortName || "",
-      cnpj: data.organization?.cnpj || "",
-      type: data.organization?.type || "OUTROS",
-      address: data.organization?.address || "",
-      district: data.organization?.district || "",
-      city: data.organization?.city || "",
-      state: data.organization?.state || "",
-      zipCode: data.organization?.zipCode || "",
-      status: data.organization?.status || "ACTIVE",
-    },
-  });
 
   const createMutation = api.organization.create.useMutation({
     onSuccess: () => {

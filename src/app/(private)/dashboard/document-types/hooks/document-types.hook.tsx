@@ -16,6 +16,8 @@ export function useDocumentTypesPage() {
     pageSize: 100,
   });
 
+  const deleteMutation = api.documentTemplate.delete.useMutation();
+
   const templates = templatesData?.templates || [];
 
   // Mapear para formato da tabela
@@ -75,13 +77,13 @@ export function useDocumentTypesPage() {
     if (!confirm("Tem certeza que deseja excluir este template?")) return;
 
     try {
-      await api.documentTemplate.delete.mutate({ id: templateId });
+      await deleteMutation.mutateAsync({ id: templateId });
       refetch();
     } catch (error) {
       console.error("Erro ao excluir template:", error);
       alert("Erro ao excluir template");
     }
-  }, [refetch]);
+  }, [deleteMutation, refetch]);
 
   const columns = useMemo(
     () => createColumns(handleEditTemplate, handleDeleteTemplate),
