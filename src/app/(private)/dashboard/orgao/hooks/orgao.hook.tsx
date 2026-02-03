@@ -1,0 +1,109 @@
+"use client";
+
+import { useDataTable } from "@/src/shared/hook/use-data-table";
+import { orgaoColumns } from "../_components/columns";
+import { useModal } from "@/src/shared/context/modal-context";
+import { OrgaoModal } from "../_components/orgao-form";
+import { api } from "@/src/shared/context/trpc-context";
+
+export function useOrgaoPage() {
+  const { openModal } = useModal();
+
+  const { data, isLoading, error, refetch } = api.organization.list.useQuery({
+    page: 1,
+    pageSize: 50,
+  });
+
+  const organizations = data?.organizations || [];
+
+  // Mapear para formato da tabela
+  const tableData = organizations.map((org) => ({
+    id: org.id,
+    name: org.name,
+    shortName: org.shortName,
+    type: org.type,
+    city: org.city || "-",
+    state: org.state || "-",
+    status: org.status === "ACTIVE" ? "active" : "inactive",
+    documentsCount: org._count?.documents || 0,
+  }));
+
+  const { table } = useDataTable({
+    data: tableData,
+    columns: orgaoColumns,
+    pageCount: data?.pagination?.totalPages || 1,
+    initialState: {
+      pagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      },
+    },
+  });
+
+  const handleOpenNewOrgao = () => {
+    openModal(
+      "create-orgao",
+      OrgaoModal,
+      {
+        onSuccess: () => {
+          refetch();
+        },
+      },
+      {
+        size: "md",
+      }
+    );
+  };
+
+  const handleEditOrgao = (orgao: typeof tableData[0]) => {
+    const originalOrg = organizations.find((o) => o.id === orgao.id);
+    if (!originalOrg) return;
+
+    openModal(
+      `edit-orgao-${orgao.id}`,
+      OrgaoModal,
+      {
+        organization: {
+          id: originalOrg.id,
+          name: originalOrg.name,
+          shortName: originalOrg.shortName,
+          cnpj: originalOrg.cnpj || "",
+          type: originalOrg.type,
+          address: originalOrg.address || "",
+          district: originalOrg.district || "",
+          city: originalOrg.city || "",
+          state: originalOrg.state || "",
+          zipCode: originalOrg.zipCode || "",
+          status: originalOrg.status,
+        },
+        onSuccess: () => {
+          refetch();
+        },
+      },
+      {
+        size: "md",
+      }
+    );
+  };
+
+  return {
+    orgaos: tableData,
+    table,
+    isLoading,
+    error,
+    refetch,
+    handleOpenNewOrgao,
+    handleEditOrgao,
+  };
+}
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,468 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTENTICAÇÃO E AUTORIZAÇÃO (NextAuth)
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id             String        @id @default(cuid())
+  name           String?
+  email          String?       @unique
+  emailVerified  DateTime?     @map("email_verified")
+  image          String?
+  password       String?
+  accounts       Account[]
+  sessions       Session[]
+  userRoles      UserRole[]
+  userCompanies  UserCompany[]
+  documents      Document[]    @relation("ResponsibleDocuments")
+  chiefDocuments Document[]    @relation("ChiefDocuments")
+  folders        Folder[]      @relation("FolderCreator")
+  files          File[]        @relation("FileCreator")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  description     String?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  description     String?
+  resource        String
+  action          String
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserCompany {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  companyId String   @map("company_id")
+  code      String? // Código do funcionário/colaborador na empresa
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@index([code])
+  @@map("user_companies")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// MÓDULO DE EMPRESAS E ESTABELECIMENTOS
+// ============================================
+
+model Company {
+  id                    String        @id @default(cuid())
+  name                  String
+  cnpj                  String        @unique
+  stateRegistration     String?       @map("state_registration")
+  municipalRegistration String?       @map("municipal_registration")
+  status                CompanyStatus @default(ACTIVE)
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+
+  establishments Establishment[]
+  documents      Document[]
+  userCompanies  UserCompany[]
+
+  @@index([cnpj])
+  @@index([status])
+  @@map("companies")
+}
+
+model DocumentGroup {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  documents Document[]
+
+  @@index([name])
+  @@map("document_groups")
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Establishment {
+  id                    String  @id @default(cuid())
+  companyId             String  @map("company_id")
+  name                  String
+  code                  String?
+  cnpj                  String? @unique
+  stateRegistration     String? @map("state_registration")
+  municipalRegistration String? @map("municipal_registration")
+
+  // Endereço
+  address    String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+  zipCode    String? @map("zip_code")
+
+  status    EstablishmentStatus @default(ACTIVE)
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@index([companyId])
+  @@index([cnpj])
+  @@index([status])
+  @@map("establishments")
+}
+
+enum EstablishmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model SocialReason {
+  id        String             @id @default(cuid())
+  name      String
+  shortName String             @map("short_name")
+  status    SocialReasonStatus @default(ACTIVE)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("social_reasons")
+}
+
+enum SocialReasonStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ============================================
+// MÓDULO DE ÓRGÃOS
+// ============================================
+
+model Organization {
+  id        String           @id @default(cuid())
+  name      String
+  shortName String           @map("short_name")
+  cnpj      String?
+  type      OrganizationType
+
+  // Endereço
+  address    String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+  zipCode    String? @map("zip_code")
+
+  status    OrganizationStatus @default(ACTIVE)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  documents Document[]
+
+  @@index([type])
+  @@index([status])
+  @@map("organizations")
+}
+
+enum OrganizationType {
+  FEDERAL
+  ESTADUAL
+  MUNICIPAL
+  OUTROS
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ============================================
+// MÓDULO DE TEMPLATES DE DOCUMENTOS
+// ============================================
+
+model DocumentTemplate {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  isDefault      Boolean  @default(false) @map("is_default")
+  classification String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  fields    DocumentTemplateField[]
+  documents Document[]
+
+  @@index([isDefault])
+  @@index([classification])
+  @@map("document_templates")
+}
+
+model DocumentTemplateField {
+  id         String    @id @default(cuid())
+  templateId String    @map("template_id")
+  name       String
+  label      String
+  type       FieldType
+  required   Boolean   @default(false)
+  order      Int       @default(0)
+
+  // Posicionamento visual no documento
+  positionX Float? @map("position_x")
+  positionY Float? @map("position_y")
+  width     Float?
+
+  // Para campos do tipo SELECT
+  options String[] @default([]) // Lista de opções
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  template DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([order])
+  @@map("document_template_fields")
+}
+
+enum FieldType {
+  TEXT
+  NUMBER
+  DATE
+  EMAIL
+  CPF
+  CNPJ
+  PHONE
+  TEXTAREA
+  SELECT
+  FILE
+}
+
+// ============================================
+// MÓDULO DE DOCUMENTOS
+// ============================================
+
+model Document {
+  id              String  @id @default(cuid())
+  templateId      String  @map("template_id")
+  organizationId  String  @map("organization_id")
+  companyId       String  @map("company_id")
+  establishmentId String  @map("establishment_id")
+  responsibleId   String  @map("responsible_id")
+  chiefId         String? @map("chief_id")
+
+  // Datas
+  issueDate      DateTime? @map("issue_date")
+  expirationDate DateTime? @map("expiration_date")
+  alertDate      DateTime? @map("alert_date")
+
+  // Dados customizados (campos do template)
+  customData Json? @map("custom_data")
+
+  // Classificação e agrupamento
+  classification String?
+  groupId        String? @map("group_id")
+
+  // Observações
+  observations String?
+
+  // Status
+  status DocumentStatus @default(ACTIVE)
+
+  // Auditoria
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  template      DocumentTemplate     @relation(fields: [templateId], references: [id])
+  organization  Organization         @relation(fields: [organizationId], references: [id])
+  company       Company              @relation(fields: [companyId], references: [id])
+  establishment Establishment        @relation(fields: [establishmentId], references: [id])
+  responsible   User                 @relation("ResponsibleDocuments", fields: [responsibleId], references: [id])
+  chief         User?                @relation("ChiefDocuments", fields: [chiefId], references: [id])
+  group         DocumentGroup?       @relation(fields: [groupId], references: [id])
+  attachments   DocumentAttachment[]
+  files         File[]               @relation("DocumentFiles")
+
+  @@index([templateId])
+  @@index([organizationId])
+  @@index([companyId])
+  @@index([establishmentId])
+  @@index([responsibleId])
+  @@index([chiefId])
+  @@index([groupId])
+  @@index([status])
+  @@index([expirationDate])
+  @@index([issueDate])
+  @@map("documents")
+}
+
+enum DocumentStatus {
+  ACTIVE
+  EXPIRED
+  PENDING
+  CANCELLED
+}
+
+model DocumentAttachment {
+  id         String   @id @default(cuid())
+  documentId String   @map("document_id")
+  fileName   String   @map("file_name")
+  fileSize   Int      @map("file_size")
+  fileType   String   @map("file_type")
+  filePath   String   @map("file_path")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("document_attachments")
+}
+
+// ============================================
+// MÓDULO DE ORGANIZAÇÃO DE ARQUIVOS (Pastas)
+// ============================================
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  parentId  String?  @map("parent_id")
+  path      String? // Path hierárquico: /folder1/subfolder1
+  order     Int      @default(0)
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("FolderHierarchy")
+  files    File[]
+  creator  User?    @relation("FolderCreator", fields: [createdBy], references: [id])
+
+  @@index([parentId])
+  @@index([path])
+  @@index([createdBy])
+  @@map("folders")
+}
+
+model File {
+  id           String   @id @default(cuid())
+  name         String
+  originalName String   @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int // em bytes
+  path         String // caminho no storage
+  url          String? // URL pública (se disponível)
+  folderId     String?  @map("folder_id")
+  documentId   String?  @map("document_id")
+  createdBy    String?  @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  folder   Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  document Document? @relation("DocumentFiles", fields: [documentId], references: [id], onDelete: SetNull)
+  creator  User?     @relation("FileCreator", fields: [createdBy], references: [id])
+
+  @@index([folderId])
+  @@index([documentId])
+  @@index([createdBy])
+  @@index([mimeType])
+  @@map("files")
+}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerta de Vencimento de Documento</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -30px -30px 30px -30px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .alert-badge {
+      display: inline-block;
+      background-color: #fef2f2;
+      color: #dc2626;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .document-info {
+      background-color: #f9fafb;
+      border-left: 4px solid #dc2626;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #6b7280;
+      min-width: 150px;
+    }
+    .info-value {
+      color: #111827;
+      text-align: right;
+      flex: 1;
+    }
+    .expiration-date {
+      background-color: #fef2f2;
+      border: 2px solid #dc2626;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .expiration-date .label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .expiration-date .date {
+      font-size: 28px;
+      font-weight: 700;
+      color: #dc2626;
+    }
+    .custom-fields {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .custom-field {
+      padding: 8px 0;
+    }
+    .custom-field-label {
+      font-weight: 600;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .custom-field-value {
+      color: #111827;
+      margin-top: 4px;
+    }
+    .observations {
+      background-color: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      color: #6b7280;
+      font-size: 12px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #dc2626;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Alerta de Vencimento de Documento</h1>
+    </div>
+
+    <div class="alert-badge">
+      Documento Próximo do Vencimento
+    </div>
+
+    <div class="expiration-date">
+      <div class="label">Data de Vencimento</div>
+      <div class="date"><%= expirationDate %></div>
+    </div>
+
+    <div class="document-info">
+      <div class="info-row">
+        <span class="info-label">Tipo de Documento:</span>
+        <span class="info-value"><%= templateName %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Órgão:</span>
+        <span class="info-value"><%= organizationName %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Empresa:</span>
+        <span class="info-value"><%= companyName %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Estabelecimento:</span>
+        <span class="info-value"><%= establishmentName %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Responsável:</span>
+        <span class="info-value"><%= responsibleName %></span>
+      </div>
+      <% if (alertDate) { %>
+      <div class="info-row">
+        <span class="info-label">Data de Alerta:</span>
+        <span class="info-value"><%= alertDate %></span>
+      </div>
+      <% } %>
+      <div class="info-row">
+        <span class="info-label">Status:</span>
+        <span class="info-value"><%= status %></span>
+      </div>
+    </div>
+
+    <% if (customData && Object.keys(customData).length > 0) { %>
+    <div class="custom-fields">
+      <h3 style="margin-top: 0; color: #111827; font-size: 16px;">Informações Adicionais</h3>
+      <% Object.entries(customData).forEach(([key, value]) => { %>
+      <div class="custom-field">
+        <div class="custom-field-label"><%= key %>:</div>
+        <div class="custom-field-value"><%= value %></div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+    <% if (observations) { %>
+    <div class="observations">
+      <strong>Observações:</strong>
+      <p style="margin: 8px 0 0 0; white-space: pre-wrap;"><%= observations %></p>
+    </div>
+    <% } %>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="<%= systemUrl %>/dashboard/documents" class="button">
+        Ver Documento no Sistema
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>Este é um email automático do sistema SIM (Simple Inventory Management).</p>
+      <p>Por favor, não responda este email.</p>
+    </div>
+  </div>
+</body>
+</html>
+
+
+
+
+
+
+

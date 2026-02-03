@@ -1,0 +1,97 @@
+"use client";
+import { useMemo, useState } from "react";
+import {
+  Plus,
+  Loader2,
+  LayoutGrid,
+  List,
+} from "lucide-react";
+import { Button } from "@/src/shared/components/global/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/shared/components/global/ui/select";
+import { DocumentList } from "./_components/document-list";
+import { DocumentExportButton } from "./_components/document-export-button";
+import { useDocumentsPage } from "./hooks/documents.hook";
+
+export default function DocumentsPage() {
+  const { documents, handleOpenNewDocument, isLoading: documentsLoading } = useDocumentsPage();
+  const [viewMode, setViewMode] = useState<"none" | "group">("none");
+
+  const exportDocuments = useMemo(() => {
+    if (!documents || documents.length === 0) return [];
+
+    return documents.map((doc) => ({
+      id: doc.id,
+      templateName: doc.templateName || "Documento",
+      organizationName: doc.orgaoName || "",
+      companyName: doc.companyName || "",
+      establishmentName: doc.establishmentName || "",
+      responsibleName: doc.responsibleName || "",
+      responsibleEmail: doc.responsibleEmail,
+      expirationDate: new Date(doc.expirationDate!).toISOString(),
+      alertDate: new Date(doc.alertDate!).toISOString(),
+      status: doc.status,
+      observations: doc.observations || undefined,
+      customData: doc.customData as Record<string, any> | undefined,
+      createdAt: new Date(doc.createdAt!).toISOString() as any,
+    })) as any;
+  }, [documents]);
+
+
+  if (documentsLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Documentos</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Documentos</h1>
+        <div className="flex gap-2">
+          <Select value={viewMode} onValueChange={(value) => setViewMode(value as "none" | "group")}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Visualização" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">
+                <div className="flex items-center gap-2">
+                  <List className="h-4 w-4" />
+                  <span>Lista</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="group">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  <span>Por Grupo</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <DocumentExportButton
+            documents={exportDocuments}
+            disabled={documents.length === 0}
+          />
+          <Button variant="default" size="sm" onClick={handleOpenNewDocument}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Documento
+          </Button>
+        </div>
+      </div>
+
+      <DocumentList documents={documents as any} groupBy={viewMode === "group" ? "group" : "none"} />
+    </div>
+  );
+}

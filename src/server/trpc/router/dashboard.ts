@@ -1,0 +1,253 @@
+import { protectedProcedure, router } from "../trpc";
+import { z } from "zod";
+
+// Helper para verificar permissões
+function hasPermission(userPermissions: string[], permission: string): boolean {
+  return userPermissions.includes(permission) || userPermissions.includes("admin");
+}
+
+export const dashboardRouter = router({
+  getStats: protectedProcedure.query(async ({ ctx }) => {
+    const sessionUser = ctx.session?.user as any;
+    const userId = sessionUser?.id;
+
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    // Buscar usuário com roles e permissões
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    // Extrair todas as permissões do usuário
+    const allPermissions = user.userRoles.flatMap((ur) =>
+      ur.role.rolePermissions.map((rp) => rp.permission.name)
+    );
+
+    // Verificar se pode ler documentos
+    const canReadDocuments = hasPermission(allPermissions, "documents:read");
+
+    // Contadores baseados em permissões
+    const stats = {
+      totalDocuments: 0,
+      totalTemplates: 0,
+      totalEstablishments: 0,
+      totalNotes: 0,
+    };
+
+    // Se tem permissão de leitura de documentos
+    if (canReadDocuments) {
+      // Contar documentos (filtrar por responsável se não for admin)
+      const isAdmin = allPermissions.includes("admin") || user.userRoles.some((ur) => ur.role.name === "ADMINISTRADOR");
+      
+      const documentWhere = isAdmin
+        ? {}
+        : { responsibleId: userId };
+
+      stats.totalDocuments = await ctx.prisma.document.count({
+        where: documentWhere,
+      });
+
+      // Contar templates (todos podem ver templates)
+      stats.totalTemplates = await ctx.prisma.documentTemplate.count({
+        where: { isDefault: true },
+      });
+
+      // Contar estabelecimentos (todos podem ver)
+      stats.totalEstablishments = await ctx.prisma.establishment.count({
+        where: { status: "ACTIVE" },
+      });
+
+      // Contar documentos com observações (notas)
+      stats.totalNotes = await ctx.prisma.document.count({
+        where: {
+          ...documentWhere,
+          observations: { not: null },
+        },
+      });
+    }
+
+    return stats;
+  }),
+
+  getLatestDocuments: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().default(5),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const sessionUser = ctx.session?.user as any;
+      const userId = sessionUser?.id;
+
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Buscar usuário com roles
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          userRoles: {
+            include: {
+              role: {
+                include: {
+                  rolePermissions: {
+                    include: {
+                      permission: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new Error("Usuário não encontrado");
+      }
+
+      const allPermissions = user.userRoles.flatMap((ur) =>
+        ur.role.rolePermissions.map((rp) => rp.permission.name)
+      );
+
+      const canReadDocuments = hasPermission(allPermissions, "documents:read");
+
+      if (!canReadDocuments) {
+        return [];
+      }
+
+      const isAdmin = allPermissions.includes("admin") || user.userRoles.some((ur) => ur.role.name === "ADMINISTRADOR");
+
+      const documentWhere = isAdmin
+        ? {}
+        : { responsibleId: userId };
+
+      const documents = await ctx.prisma.document.findMany({
+        where: documentWhere,
+        take: input.limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          template: {
+            select: {
+              name: true,
+            },
+          },
+          organization: {
+            select: {
+              name: true,
+            },
+          },
+          company: {
+            select: {
+              name: true,
+            },
+          },
+          establishment: {
+            select: {
+              name: true,
+              code: true,
+            },
+          },
+        },
+      });
+
+      return documents.map((doc) => ({
+        id: doc.id,
+        name: doc.template?.name || "Documento",
+        date: doc.createdAt.toISOString().split("T")[0],
+        type: "PDF", // Pode ser melhorado para detectar tipo real
+        observations: doc.observations,
+      }));
+    }),
+
+  getEstablishmentsStats: protectedProcedure.query(async ({ ctx }) => {
+    const sessionUser = ctx.session?.user as any;
+    const userId = sessionUser?.id;
+
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    const allPermissions = user.userRoles.flatMap((ur) =>
+      ur.role.rolePermissions.map((rp) => rp.permission.name)
+    );
+
+    const canReadDocuments = hasPermission(allPermissions, "documents:read");
+
+    if (!canReadDocuments) {
+      return [];
+    }
+
+    const isAdmin = allPermissions.includes("admin") || user.userRoles.some((ur) => ur.role.name === "ADMINISTRADOR");
+
+    const documentWhere = isAdmin
+      ? {}
+      : { responsibleId: userId };
+
+    // Buscar estabelecimentos com contagem de documentos
+    const establishments = await ctx.prisma.establishment.findMany({
+      where: { status: "ACTIVE" },
+      include: {
+        _count: {
+          select: {
+            documents: {
+              where: documentWhere,
+            },
+          },
+        },
+      },
+    });
+
+    return establishments.map((est) => ({
+      name: est.name,
+      code: est.code || "",
+      files: est._count.documents,
+    }));
+  }),
+});
+
