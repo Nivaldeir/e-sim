@@ -99,7 +99,7 @@ export default function RegisterPage() {
                 <Lock className="w-4 h-4 absolute -bottom-1 -right-1 text-background bg-primary rounded-full p-0.5" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold tracking-tight text-primary">SIM</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-primary">Smartdoc - GERENCIAMENTO SEGURO DE ARQUIVOS</h2>
                 <p className="text-xs text-muted-foreground">Gerenciamento seguro de arquivos</p>
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function RegisterPage() {
                 className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 disabled={registerMutation.isPending}
               >
-                {registerMutation.isPending ? "Criando conta..." : "Criar conta"}
+                {registerMutation.isPending ? "Criando conta..." : "Criar conta no Smartdoc"}
               </Button>
             </form>
           </Form>
@@ -290,7 +290,7 @@ export default function RegisterPage() {
 
         <div className="relative max-w-lg w-full space-y-6">
           <div className="space-y-2">
-            <h3 className="text-2xl font-semibold">Por que escolher o SIM?</h3>
+            <h3 className="text-2xl font-semibold">Por que escolher o Smartdoc?</h3>
             <p className="text-muted-foreground">
               Gerencie seus documentos de forma inteligente e segura
             </p>

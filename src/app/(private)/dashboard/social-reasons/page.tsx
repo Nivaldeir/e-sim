@@ -84,11 +84,11 @@ function SocialReasonsPageContent() {
 
       <Card>
         <CardHeader className="px-6 pb-0">
-          <CardTitle className="text-base">Próximo passo</CardTitle>
+          <CardTitle className="text-base">Próximos passos da Razão Social</CardTitle>
         </CardHeader>
         <CardContent className="px-6 pt-4 space-y-1 pb-4">
           <p className="text-xs text-muted-foreground">
-            Após cadastrar todas as razões sociais, acesse a tela de <strong>Tipos de documentos</strong> para cadastrar os tipos de documento.
+            Acesse a tela de <strong>Estabelecimentos</strong> para cadastrar as filiais.
           </p>
         </CardContent>
       </Card>

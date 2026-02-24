@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo, useCallback } from "react";
 import { useDataTable } from "@/src/shared/hook/use-data-table";
-import { orgaoColumns } from "../_components/columns";
+import { getOrgaoColumns } from "../_components/columns";
 import { useModal } from "@/src/shared/context/modal-context";
 import { OrgaoModal } from "../_components/orgao-form";
 import { api } from "@/src/shared/context/trpc-context";
@@ -28,9 +29,45 @@ export function useOrgaoPage() {
     documentsCount: org._count?.documents || 0,
   }));
 
+  const handleEditOrgao = useCallback(
+    (orgao: (typeof tableData)[0]) => {
+      const originalOrg = organizations.find((o: any) => o.id === orgao.id);
+      if (!originalOrg) return;
+
+      openModal(
+        `edit-orgao-${orgao.id}`,
+        OrgaoModal,
+        {
+          organization: {
+            id: originalOrg.id,
+            name: originalOrg.name,
+            shortName: originalOrg.shortName,
+            cnpj: originalOrg.cnpj || "",
+            type: originalOrg.type,
+            address: originalOrg.address || "",
+            district: originalOrg.district || "",
+            city: originalOrg.city || "",
+            state: originalOrg.state || "",
+            zipCode: originalOrg.zipCode || "",
+            status: originalOrg.status,
+          },
+          onSuccess: () => {
+            refetch();
+          },
+        },
+        {
+          size: "md",
+        }
+      );
+    },
+    [openModal, organizations, refetch]
+  );
+
+  const columns = useMemo(() => getOrgaoColumns(handleEditOrgao), [handleEditOrgao]);
+
   const { table } = useDataTable({
     data: tableData,
-    columns: orgaoColumns,
+    columns,
     pageCount: data?.pagination?.totalPages || 1,
     initialState: {
       pagination: {
@@ -45,37 +82,6 @@ export function useOrgaoPage() {
       "create-orgao",
       OrgaoModal,
       {
-        onSuccess: () => {
-          refetch();
-        },
-      },
-      {
-        size: "md",
-      }
-    );
-  };
-
-  const handleEditOrgao = (orgao: typeof tableData[0]) => {
-    const originalOrg = organizations.find((o: any) => o.id === orgao.id);
-    if (!originalOrg) return;
-
-    openModal(
-      `edit-orgao-${orgao.id}`,
-      OrgaoModal,
-      {
-        organization: {
-          id: originalOrg.id,
-          name: originalOrg.name,
-          shortName: originalOrg.shortName,
-          cnpj: originalOrg.cnpj || "",
-          type: originalOrg.type,
-          address: originalOrg.address || "",
-          district: originalOrg.district || "",
-          city: originalOrg.city || "",
-          state: originalOrg.state || "",
-          zipCode: originalOrg.zipCode || "",
-          status: originalOrg.status,
-        },
         onSuccess: () => {
           refetch();
         },

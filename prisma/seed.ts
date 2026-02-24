@@ -471,8 +471,8 @@ async function main() {
   console.log('📋 Criando razão social de exemplo...');
   await prisma.socialReason.create({
     data: {
-      name: 'SANDVIK COROMANT DO BRASIL INDUSTRIA E COMERCIO DE FERRAMENTAS LTDA',
-      shortName: 'COROMANT',
+      name: 'Tradição',
+      shortName: 'TRAD',
       status: 'ACTIVE',
     },
   });

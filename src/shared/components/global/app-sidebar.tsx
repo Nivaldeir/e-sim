@@ -63,7 +63,7 @@ const data = {
       icon: Building2,
     },
     {
-      title: "Razões Sociais",
+      title: "Razão Social",
       url: "/dashboard/social-reasons",
       icon: IdCard,
     },

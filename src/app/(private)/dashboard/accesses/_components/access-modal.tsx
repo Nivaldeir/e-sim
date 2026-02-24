@@ -21,6 +21,16 @@ import { Input } from "@/src/shared/components/global/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/global/ui/select";
 import { Separator } from "@/src/shared/components/global/ui/separator";
 
+const DESCRICAO_POR_TIPO: Record<string, string> = {
+  ADMINISTRADOR: "Acesso total ao sistema",
+  EDITOR: "Pode criar e editar documentos",
+  LEITOR: "Apenas visualização de documentos e Download",
+};
+
+function getDescricaoTipoAcesso(role: { name: string; description?: string | null }): string {
+  return DESCRICAO_POR_TIPO[role.name] ?? role.description ?? role.name;
+}
+
 type Role = {
   id: string;
   name: string;
@@ -89,24 +99,6 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
 
   const selectedRoleIds = form.watch("roleIds");
   const currentRoleIds = React.useMemo(() => data?.user.roles.map((r) => r.id) || [], [data?.user.roles]);
-
-  const getPermissionsForRole = React.useCallback((roleId: string) => {
-    const role = data?.roles?.find((r) => r.id === roleId);
-    return role?.permissions || [];
-  }, [data?.roles]);
-
-  const allSelectedPermissions = React.useMemo(() => {
-    const permissionMap = new Map<string, { resource: string; action: string }>();
-    selectedRoleIds.forEach((roleId) => {
-      getPermissionsForRole(roleId).forEach((perm) => {
-        permissionMap.set(perm.id, {
-          resource: perm.resource,
-          action: perm.action,
-        });
-      });
-    });
-    return Array.from(permissionMap.values());
-  }, [selectedRoleIds, getPermissionsForRole]);
 
   if (!data) return null;
 
@@ -197,8 +189,6 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
                 <div className="space-y-3">
                   {roles.map((role) => {
                     const isSelected = selectedRoleIds.includes(role.id);
-                    const rolePermissions = getPermissionsForRole(role.id);
-
                     return (
                       <FormField
                         key={role.id}
@@ -225,34 +215,14 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
                                   className="mt-1"
                                 />
                               </FormControl>
-                              <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <FormLabel className="font-medium cursor-pointer">
-                                    {role.name}
-                                  </FormLabel>
-                                  {isSelected && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      Ativo
-                                    </Badge>
-                                  )}
-                                </div>
-                                {role.description && (
-                                  <FormDescription className="text-sm">
-                                    {role.description}
-                                  </FormDescription>
-                                )}
-                                {rolePermissions.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-2">
-                                    {rolePermissions.map((perm) => (
-                                      <Badge
-                                        key={perm.id}
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        {perm.action}:{perm.resource}
-                                      </Badge>
-                                    ))}
-                                  </div>
+                              <div className="flex-1 flex items-center gap-2 flex-wrap">
+                                <FormLabel className="font-medium cursor-pointer text-sm">
+                                  {getDescricaoTipoAcesso(role)}
+                                </FormLabel>
+                                {isSelected && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Ativo
+                                  </Badge>
                                 )}
                               </div>
                             </FormItem>
@@ -364,21 +334,6 @@ export function AccessModal({ onClose, data }: ModalProps<AccessModalData>) {
               </FormItem>
             )}
           />
-
-          {allSelectedPermissions.length > 0 && (
-            <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-              <FormLabel className="text-base font-semibold">
-                Permissões Totais (Resumo)
-              </FormLabel>
-              <div className="flex flex-wrap gap-1">
-                {allSelectedPermissions.map((perm, idx) => (
-                  <Badge key={idx} variant="default" className="text-xs">
-                    {perm.action}:{perm.resource}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
 
           {form.formState.errors.root && (
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">

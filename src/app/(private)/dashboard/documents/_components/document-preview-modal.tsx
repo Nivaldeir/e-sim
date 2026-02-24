@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/src/shared/components/global/ui/dialog";
-import { FileText, Calendar, Building2, User, Mail } from "lucide-react";
+import { FileText, Calendar, Building2, User, Mail, Download } from "lucide-react";
 import { type DocumentData } from "@/src/shared/utils/document-export-factory";
 import { Badge } from "@/src/shared/components/global/ui/badge";
 
@@ -19,6 +19,7 @@ interface DocumentPreviewModalProps {
   onClose: () => void;
   document: DocumentData;
   onExport?: (format: "pdf" | "excel" | "csv") => void;
+  attachments?: Array<{ name: string; filePath?: string }>;
 }
 
 export function DocumentPreviewModal({
@@ -26,6 +27,7 @@ export function DocumentPreviewModal({
   onClose,
   document,
   onExport,
+  attachments = [],
 }: DocumentPreviewModalProps) {
   const statusColors: Record<string, string> = {
     ACTIVE: "bg-green-100 text-green-800",
@@ -166,6 +168,29 @@ export function DocumentPreviewModal({
               <h4 className="text-sm font-semibold mb-2">Observações</h4>
               <div className="bg-muted/50 rounded-md p-3">
                 <p className="text-sm whitespace-pre-wrap">{document.observations}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Anexos */}
+          {attachments.length > 0 && (
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-semibold mb-2">Anexos</h4>
+              <div className="flex flex-wrap gap-2">
+                {attachments.map((att, idx) => (
+                  <a
+                    key={idx}
+                    href={att.filePath ? `/api/document-attachments/download?path=${encodeURIComponent(att.filePath)}` : undefined}
+                    download={att.name}
+                    target={att.filePath ? "_blank" : undefined}
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="truncate max-w-[200px]">{att.name}</span>
+                    <Download className="h-3 w-3" />
+                  </a>
+                ))}
               </div>
             </div>
           )}

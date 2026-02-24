@@ -1,7 +1,7 @@
 "use client";
 
 import { z } from "zod";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/src/shared/components/global/ui";
 import {
   Form,
@@ -30,6 +30,7 @@ import { CreateDocumentGroupModal } from "./create-document-group-modal";
 
 interface DocumentModalData {
   onSuccess: () => void;
+  documentId?: string;
 }
 
 const documentSchema = z.object({
@@ -91,6 +92,11 @@ export function DocumentFormModal({
 
   const { openModal } = useModal();
 
+  const { data: existingDocument, isLoading: documentLoading } = api.document.getById.useQuery(
+    { id: data?.documentId! },
+    { enabled: !!data?.documentId }
+  );
+
   // Buscar template selecionado com seus campos
   const selectedTemplate = templates.find((t: any) => t.id === selectedTemplateId);
   const templateFields = selectedTemplate?.fields || [];
@@ -113,6 +119,29 @@ export function DocumentFormModal({
   });
 
   if (!data) return null;
+
+  const isEditing = !!data.documentId && !!existingDocument;
+
+  useEffect(() => {
+    if (!existingDocument) return;
+    const d = existingDocument as any;
+    form.reset({
+      templateId: d.templateId ?? "",
+      organizationId: d.organizationId ?? "",
+      issueDate: d.issueDate ? new Date(d.issueDate).toISOString().slice(0, 10) : "",
+      expirationDate: d.expirationDate ? new Date(d.expirationDate).toISOString().slice(0, 10) : "",
+      alertDate: d.alertDate ? new Date(d.alertDate).toISOString().slice(0, 10) : "",
+      responsibleId: d.responsibleId ?? "",
+      chiefId: d.chiefId ?? "",
+      companyId: d.companyId ?? "",
+      establishmentId: d.establishmentId ?? "",
+      classification: d.classification ?? "",
+      groupId: d.groupId ?? "",
+      observations: d.observations ?? "",
+    });
+    setSelectedTemplateId(d.templateId ?? "");
+    setCustomFieldsData((d.customData as Record<string, string>) ?? {});
+  }, [existingDocument, form]);
 
   // Mutation para criar documento
   const createDocumentMutation = api.document.create.useMutation({
@@ -153,6 +182,16 @@ export function DocumentFormModal({
     },
   });
 
+  const updateDocumentMutation = api.document.update.useMutation({
+    onSuccess: () => {
+      data.onSuccess();
+      onClose();
+    },
+    onError: (error) => {
+      form.setError("root", { message: error.message });
+    },
+  });
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setAttachments((prev) => [...prev, ...files]);
@@ -164,8 +203,27 @@ export function DocumentFormModal({
   };
 
   const handleSubmit = async (values: DocumentFormValues) => {
-    setIsUploading(true);
+    if (isEditing && data.documentId) {
+      updateDocumentMutation.mutate({
+        id: data.documentId,
+        templateId: values.templateId,
+        organizationId: values.organizationId,
+        companyId: values.companyId,
+        establishmentId: values.establishmentId,
+        responsibleId: values.responsibleId,
+        chiefId: values.chiefId || undefined,
+        issueDate: values.issueDate || undefined,
+        expirationDate: values.expirationDate || undefined,
+        alertDate: values.alertDate || undefined,
+        classification: values.classification || undefined,
+        groupId: values.groupId || undefined,
+        observations: values.observations || undefined,
+        customData: Object.keys(customFieldsData).length > 0 ? customFieldsData : undefined,
+      });
+      return;
+    }
 
+    setIsUploading(true);
     try {
       createDocumentMutation.mutate({
         templateId: values.templateId,
@@ -193,15 +251,15 @@ export function DocumentFormModal({
     }
   };
 
-  const isDataLoading = templatesLoading || orgaosLoading || companiesLoading || establishmentsLoading || usersLoading || groupsLoading;
-  const isSubmitting = createDocumentMutation.isPending || isUploading;
+  const isDataLoading = templatesLoading || orgaosLoading || companiesLoading || establishmentsLoading || usersLoading || groupsLoading || (!!data.documentId && documentLoading);
+  const isSubmitting = createDocumentMutation.isPending || updateDocumentMutation.isPending || isUploading;
 
   return (
     <div className="max-h-[90vh] overflow-y-auto p-6" id="form-document">
       <div className="mb-4">
-        <h2 className="text-2xl font-semibold">Novo documento</h2>
+        <h2 className="text-2xl font-semibold">{isEditing ? "Editar documento" : "Novo documento"}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Cadastre um novo documento com todas as informações necessárias.
+          {isEditing ? "Altere as informações do documento." : "Cadastre um novo documento com todas as informações necessárias."}
         </p>
       </div>
 
@@ -670,6 +728,7 @@ export function DocumentFormModal({
               </div>
             )}
 
+            {!isEditing && (
             <div>
               <FormLabel>Anexos</FormLabel>
               <div className="mt-2 space-y-2">
@@ -720,6 +779,7 @@ export function DocumentFormModal({
                 )}
               </div>
             </div>
+            )}
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button

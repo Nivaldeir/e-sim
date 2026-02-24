@@ -1,11 +1,11 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/src/shared/components/global/ui";
+import { Badge, Button } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
 import { FileText } from "lucide-react";
 
-type EstablishmentTableData = {
+export type EstablishmentTableData = {
   id: string;
   name: string;
   code: string;
@@ -15,7 +15,8 @@ type EstablishmentTableData = {
   company: string;
 };
 
-export const establishmentColumns: ColumnDef<EstablishmentTableData>[] = [
+export function getEstablishmentColumns(onEdit: (establishment: EstablishmentTableData) => void): ColumnDef<EstablishmentTableData>[] {
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -57,17 +58,27 @@ export const establishmentColumns: ColumnDef<EstablishmentTableData>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const status = row.original.status;
+      const establishment = row.original;
+      const status = establishment.status;
+      const isActive = status === "active";
       return (
         <div className="flex justify-center">
-          <Badge
-            variant={status === "active" ? "default" : "secondary"}
-            className={
-              status === "active" ? "bg-emerald-500 hover:bg-emerald-600" : ""
-            }
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto p-0 hover:bg-transparent"
+            onClick={() => onEdit(establishment)}
+            title="Abrir para edição"
           >
-            {status === "active" ? "Ativo" : "Inativo"}
-          </Badge>
+            <Badge
+              variant={isActive ? "default" : "secondary"}
+              className={
+                isActive ? "bg-emerald-500 hover:bg-emerald-600 cursor-pointer" : "cursor-pointer"
+              }
+            >
+              {isActive ? "Ativo" : "Inativo"}
+            </Badge>
+          </Button>
         </div>
       );
     },
@@ -86,10 +97,7 @@ export const establishmentColumns: ColumnDef<EstablishmentTableData>[] = [
     },
   },
 ];
-
-
-
-
+}
 
 
 

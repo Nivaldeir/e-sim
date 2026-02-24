@@ -3,12 +3,15 @@
 import { Suspense } from "react";
 import { useDocumentTypesPage } from "./hooks/document-types.hook";
 import { Button } from "@/src/shared/components/global/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Input } from "@/src/shared/components/global/ui/input";
+import { Plus, Loader2, Search } from "lucide-react";
 import { TemplateCard } from "./_components/template-card";
 
 function DocumentTypesPageContent() {
   const {
-    templates,
+    filteredTemplates,
+    searchQuery,
+    setSearchQuery,
     isLoading,
     handleOpenNewTemplate,
     handleEditTemplate,
@@ -30,6 +33,16 @@ function DocumentTypesPageContent() {
         </Button>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar documento"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((key) => (
@@ -39,15 +52,17 @@ function DocumentTypesPageContent() {
             />
           ))}
         </div>
-      ) : templates.length === 0 ? (
+      ) : filteredTemplates.length === 0 ? (
         <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-border/60">
           <p className="text-sm text-muted-foreground">
-            Nenhum template cadastrado. Clique em &quot;Novo Template&quot; para criar o primeiro.
+            {searchQuery.trim()
+              ? "Nenhum template encontrado para essa pesquisa."
+              : "Nenhum template cadastrado. Clique em \"Novo Template\" para criar o primeiro."}
           </p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {templates.map((template: any) => (
+          {filteredTemplates.map((template: any) => (
             <TemplateCard
               key={template.id}
               template={template as any}

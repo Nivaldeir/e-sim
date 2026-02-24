@@ -10,6 +10,7 @@ import { Folder, File, Lock, Cloud, Users, Shield } from 'lucide-react'
 import { Label } from "@/src/shared/components/global/ui/label"
 import { Input } from "@/src/shared/components/global/ui/input"
 import { Button } from "@/src/shared/components/global/ui"
+import { Logo } from "@/src/shared/components/global/logo"
 
 function LoginPageContent() {
   const router = useRouter()
@@ -51,12 +52,9 @@ function LoginPageContent() {
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="relative">
-                <Folder className="w-9 h-9 text-primary" fill="currentColor" />
-                <Lock className="w-4 h-4 absolute -bottom-1 -right-1 text-background bg-primary rounded-full p-0.5" />
-              </div>
+              <Logo size={52} />
               <div>
-                <h2 className="text-xl font-semibold tracking-tight text-primary">SIM</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-primary">Smartdoc</h2>
                 <p className="text-xs text-muted-foreground">Gerenciamento seguro de arquivos</p>
               </div>
             </div>
@@ -126,12 +124,12 @@ function LoginPageContent() {
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               disabled={isLoading}
             >
-              {isLoading ? "Entrando..." : "Entrar no SIM"}
+              {isLoading ? "Entrando..." : "Entrar no Smartdoc"}
             </Button>
           </form>
 
@@ -215,14 +213,14 @@ function LoginPageContent() {
 
             {/* Stats Bar */}
             <div className="bg-muted/50 px-6 py-3 border-t border-border flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">5 itens</span>
-            <span className="text-xs text-muted-foreground">24,8 GB de 100 GB usados</span>
+              <span className="text-xs text-muted-foreground">5 itens</span>
+              <span className="text-xs text-muted-foreground">24,8 GB de 100 GB usados</span>
             </div>
           </div>
 
           {/* Floating Badge */}
           <div className="absolute -top-4 -right-4 bg-accent text-accent-foreground px-4 py-2 rounded-full shadow-lg">
-            <p className="text-sm font-semibold">Organize com facilidade</p>
+            <p className="text-sm font-semibold">PROJETOS / CERTIDÕES / CONTRATOS / DOCUMENTOS FISCAIS / BALANÇOS / ATIVOS / CONTROLES EM GERAL</p>
           </div>
         </div>
       </div>

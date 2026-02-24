@@ -1,21 +1,23 @@
 "use client";
 
+import { useState, useCallback, useMemo } from "react";
 import { useModal } from "@/src/shared/context/modal-context";
 import { DocumentFormModal } from "../_components/document-form";
 import { api } from "@/src/shared/context/trpc-context";
 
 export function useDocumentsPage() {
   const { openModal } = useModal();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Buscar documentos do banco
   const { data: documentsData, isLoading, error, refetch } = api.document.list.useQuery({
     page: 1,
-    pageSize: 50,
+    pageSize: 100,
   });
 
   const documents = documentsData?.documents || [];
 
-  const mappedDocuments = documents.map((doc: any) => ({
+  const mappedDocuments = useMemo(() => documents.map((doc: any) => ({
     id: doc.id,
     name: doc.template?.name || "Documento",
     templateName: doc.template?.name || "",
@@ -34,11 +36,31 @@ export function useDocumentsPage() {
     customData: doc.customData,
     groupId: doc.group?.id || undefined,
     groupName: doc.group?.name || undefined,
-    attachments: [],
+    attachments: (doc.attachments || []).map((a: any) => ({
+      name: a.fileName,
+      size: a.fileSize || 0,
+      type: a.fileType || "",
+      id: a.id,
+      filePath: a.filePath,
+    })),
     createdAt: doc.createdAt.toISOString(),
-  }));
+  })), [documents]);
 
-  const handleOpenNewDocument = () => {
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery.trim()) return mappedDocuments;
+    const q = searchQuery.trim().toLowerCase();
+    return mappedDocuments.filter(
+      (d: typeof mappedDocuments[0]) =>
+        (d.documentTypeName || "").toLowerCase().includes(q) ||
+        (d.orgaoName || "").toLowerCase().includes(q) ||
+        (d.companyName || "").toLowerCase().includes(q) ||
+        (d.establishmentName || "").toLowerCase().includes(q) ||
+        (d.responsibleName || "").toLowerCase().includes(q) ||
+        (d.observations || "").toLowerCase().includes(q)
+    );
+  }, [mappedDocuments, searchQuery]);
+
+  const handleOpenNewDocument = useCallback(() => {
     openModal(
       "create-document",
       DocumentFormModal,
@@ -51,14 +73,33 @@ export function useDocumentsPage() {
         className: "max-w-full lg:max-w-5xl",
       }
     );
-  };
+  }, [openModal, refetch]);
+
+  const handleEditDocument = useCallback((doc: typeof filteredDocuments[0]) => {
+    openModal(
+      "edit-document-" + doc.id,
+      DocumentFormModal,
+      {
+        documentId: doc.id,
+        onSuccess: () => {
+          refetch();
+        },
+      },
+      {
+        className: "max-w-full lg:max-w-5xl",
+      }
+    );
+  }, [openModal, refetch]);
 
   return {
-    documents: mappedDocuments,
+    documents: filteredDocuments,
     isLoading,
     error,
     refetch,
+    searchQuery,
+    setSearchQuery,
     handleOpenNewDocument,
+    handleEditDocument,
   };
 }
 

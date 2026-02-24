@@ -9,6 +9,8 @@ export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = api.dashboard.getStats.useQuery();
   const { data: latestFiles, isLoading: filesLoading } = api.dashboard.getLatestDocuments.useQuery({ limit: 5 });
   const { data: establishments, isLoading: establishmentsLoading } = api.dashboard.getEstablishmentsStats.useQuery();
+  const { data: companiesData } = api.company.list.useQuery({ page: 1, pageSize: 1 });
+  const companyName = companiesData?.companies?.[0]?.name ?? "Empresa";
 
   const summaryCards = [
     {
@@ -27,7 +29,7 @@ export default function DashboardPage() {
       icon: Building2,
     },
     {
-      title: "Notas",
+      title: "Obs.",
       value: stats?.totalNotes?.toString() || "0",
       icon: StickyNote,
     },
@@ -54,6 +56,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="rounded-lg border bg-card px-4 py-3">
+        <p className="text-sm font-medium text-muted-foreground">Nome da empresa</p>
+        <p className="text-lg font-semibold">{companyName}</p>
+        <p className="text-sm font-semibold text-emerald-600 mt-1">Controle de Documentos</p>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
           <Card key={card.title} className="flex-row items-center gap-4 px-6 py-4">
@@ -85,9 +93,11 @@ export default function DashboardPage() {
           <CardContent className="mt-4 space-y-2 pb-4">
             {latestFiles && latestFiles.length > 0 ? (
               latestFiles.map((file: any) => (
-                <div
+                <Link
                   key={file.id}
-                  className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2 hover:bg-muted/60"
+                  href={`/document/${file.id}`}
+                  className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2 hover:bg-muted/60 transition-colors"
+                  title="Abrir documento"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-700">
@@ -108,7 +118,7 @@ export default function DashboardPage() {
                       {file.type}
                     </Badge>
                   </div>
-                </div>
+                </Link>
               ))
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
@@ -161,13 +171,13 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="mt-4 space-y-1 pb-4">
           <p className="text-xs text-muted-foreground">
-            Use o Menu SIM (1-31) para navegar pelas categorias de arquivos.
+            Clique em um estabelecimento para ver seus arquivos.
           </p>
           <p className="text-xs text-muted-foreground">
-            Acesse Estabelecimentos para visualizar arquivos por unidade.
+            Use o Menu Smartdoc (Lateral) para navegar por categoria de arquivo.
           </p>
           <p className="text-xs text-muted-foreground">
-            Cada categoria e arquivo pode receber notas e observações.
+            Cada categoria e arquivo pode receber observações.
           </p>
         </CardContent>
       </Card>

@@ -1,12 +1,12 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/src/shared/components/global/ui";
+import { Badge, Button } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
 
 type OrganizationType = "FEDERAL" | "ESTADUAL" | "MUNICIPAL" | "OUTROS";
 
-type OrgaoTableData = {
+export type OrgaoTableData = {
   id: string;
   name: string;
   shortName: string;
@@ -17,7 +17,8 @@ type OrgaoTableData = {
   documentsCount: number;
 };
 
-export const orgaoColumns: ColumnDef<OrgaoTableData>[] = [
+export function getOrgaoColumns(onEdit: (orgao: OrgaoTableData) => void): ColumnDef<OrgaoTableData>[] {
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -64,23 +65,33 @@ export const orgaoColumns: ColumnDef<OrgaoTableData>[] = [
       <DataTableColumnHeader column={column} title="Status" className="justify-start flex text-start w-full" />
     ),
     cell: ({ row }) => {
-      const status = row.original.status;
+      const orgao = row.original;
+      const status = orgao.status;
       const isActive = status === "active";
       return (
-        <Badge
-          variant={isActive ? "default" : "secondary"}
-          className={
-            isActive
-              ? "bg-emerald-500 hover:bg-emerald-600"
-              : "bg-red-500 hover:bg-red-600 text-white"
-          }
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto p-0 hover:bg-transparent"
+          onClick={() => onEdit(orgao)}
+          title="Abrir para edição"
         >
-          {isActive ? "Ativo" : "Inativo"}
-        </Badge>
+          <Badge
+            variant={isActive ? "default" : "secondary"}
+            className={
+              isActive
+                ? "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+                : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+            }
+          >
+            {isActive ? "Ativo" : "Inativo"}
+          </Badge>
+        </Button>
       );
     },
   },
 ];
+}
 
 
 

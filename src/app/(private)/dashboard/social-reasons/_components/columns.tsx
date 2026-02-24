@@ -1,17 +1,18 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/src/shared/components/global/ui";
+import { Badge, Button } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
 
-type SocialReasonTableData = {
+export type SocialReasonTableData = {
   id: string;
   name: string;
   shortName: string;
   status: string;
 };
 
-export const socialReasonColumns: ColumnDef<SocialReasonTableData>[] = [
+export function getSocialReasonColumns(onEdit: (reason: SocialReasonTableData) => void): ColumnDef<SocialReasonTableData>[] {
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -35,23 +36,33 @@ export const socialReasonColumns: ColumnDef<SocialReasonTableData>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const status = row.original.status;
+      const reason = row.original;
+      const status = reason.status;
       const isActive = status === "active";
       return (
-        <Badge
-          variant={isActive ? "default" : "secondary"}
-          className={
-            isActive
-              ? "bg-emerald-500 hover:bg-emerald-600"
-              : "bg-red-500 hover:bg-red-600 text-white"
-          }
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto p-0 hover:bg-transparent"
+          onClick={() => onEdit(reason)}
+          title="Abrir para edição"
         >
-          {isActive ? "Ativo" : "Inativo"}
-        </Badge>
+          <Badge
+            variant={isActive ? "default" : "secondary"}
+            className={
+              isActive
+                ? "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+                : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+            }
+          >
+            {isActive ? "Ativo" : "Inativo"}
+          </Badge>
+        </Button>
       );
     },
   },
 ];
+}
 
 
 

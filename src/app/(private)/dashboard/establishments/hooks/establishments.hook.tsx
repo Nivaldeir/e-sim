@@ -1,13 +1,15 @@
 "use client";
 
+import { useMemo, useCallback, useState } from "react";
 import { useDataTable } from "@/src/shared/hook/use-data-table";
 import { useModal } from "@/src/shared/context/modal-context";
 import { EstablishmentModal } from "../_components/establishment-form";
-import { establishmentColumns } from "../_components/columns";
+import { getEstablishmentColumns } from "../_components/columns";
 import { api } from "@/src/shared/context/trpc-context";
 
 export function useEstablishmentsPage() {
   const { openModal } = useModal();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data, isLoading, error, refetch } = api.establishment.list.useQuery({
     page: 1,
@@ -17,7 +19,7 @@ export function useEstablishmentsPage() {
   const establishments = data?.establishments || [];
 
   // Mapear dados para formato da tabela
-  const tableData = establishments.map((est: any) => ({
+  const tableData = useMemo(() => establishments.map((est: any) => ({
     id: est.id,
     name: est.name,
     code: est.code || "",
@@ -25,36 +27,21 @@ export function useEstablishmentsPage() {
     status: est.status === "ACTIVE" ? "active" : "inactive",
     filesCount: est._count?.documents || 0,
     company: est.company?.name || "-",
-  }));
+  })), [establishments]);
 
-  const { table } = useDataTable({
-    data: tableData,
-    columns: establishmentColumns,
-    pageCount: data?.pagination?.totalPages || 1,
-    initialState: {
-      pagination: {
-        pageSize: 10,
-        pageIndex: 0,
-      },
-    },
-  });
-
-  const handleOpenNewEstablishment = () => {
-    openModal(
-      "create-establishment",
-      EstablishmentModal,
-      {
-        onSuccess: () => {
-          refetch();
-        },
-      },
-      {
-        size: "md",
-      }
+  // Filtrar por pesquisa (nome, código ou empresa)
+  const filteredTableData = useMemo(() => {
+    if (!searchQuery.trim()) return tableData;
+    const q = searchQuery.trim().toLowerCase();
+    return tableData.filter(
+      (row: { name: string; code: string; company: string }) =>
+        (row.name || "").toLowerCase().includes(q) ||
+        (row.code || "").toLowerCase().includes(q) ||
+        (row.company || "").toLowerCase().includes(q)
     );
-  };
+  }, [tableData, searchQuery]);
 
-  const handleEditEstablishment = (establishment: typeof tableData[0]) => {
+  const handleEditEstablishment = useCallback((establishment: (typeof tableData)[0]) => {
     const originalEst = establishments.find((e: any) => e.id === establishment.id);
     if (!originalEst) return;
 
@@ -85,10 +72,41 @@ export function useEstablishmentsPage() {
         size: "md",
       }
     );
+  }, [openModal, establishments, refetch]);
+
+  const columns = useMemo(() => getEstablishmentColumns(handleEditEstablishment), [handleEditEstablishment]);
+
+  const { table } = useDataTable({
+    data: filteredTableData,
+    columns,
+    pageCount: data?.pagination?.totalPages || 1,
+    initialState: {
+      pagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      },
+    },
+  });
+
+  const handleOpenNewEstablishment = () => {
+    openModal(
+      "create-establishment",
+      EstablishmentModal,
+      {
+        onSuccess: () => {
+          refetch();
+        },
+      },
+      {
+        size: "md",
+      }
+    );
   };
 
   return {
-    establishments: tableData,
+    establishments: filteredTableData,
+    searchQuery,
+    setSearchQuery,
     table,
     isLoading,
     error,

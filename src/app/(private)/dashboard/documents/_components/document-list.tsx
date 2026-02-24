@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { Card, CardContent, Badge, Button } from "@/src/shared/components/global/ui";
-import { FileText, Download, Calendar, Building2, User, Mail, Loader2, Folder } from "lucide-react";
+import { FileText, Download, Calendar, Building2, User, Mail, Loader2, Folder, Pencil, ExternalLink } from "lucide-react";
 import { getExpirationStatus } from "@/src/shared/utils/document-expiration";
 import { QRCodeViewer } from "@/src/shared/components/global/qr-code-viewer";
 import { GroupQRCodeViewer } from "./group-qr-code-viewer";
+import { DocumentPreviewModal } from "./document-preview-modal";
+import { DocumentExportFactory, type DocumentData } from "@/src/shared/utils/document-export-factory";
 
 export type SavedDocument = {
   id: string;
@@ -20,23 +22,47 @@ export type SavedDocument = {
   companyName: string;
   establishmentName: string;
   observations?: string;
+  customData?: Record<string, any>;
+  status?: string;
   attachments: Array<{
+    id?: string;
     name: string;
     size: number;
     type: string;
+    filePath?: string;
   }>;
   groupId?: string;
   groupName?: string;
   createdAt: string;
 };
 
+function toDocumentData(doc: SavedDocument): DocumentData {
+  return {
+    id: doc.id,
+    templateName: doc.documentTypeName,
+    organizationName: doc.orgaoName,
+    companyName: doc.companyName,
+    establishmentName: doc.establishmentName,
+    responsibleName: doc.responsibleName,
+    responsibleEmail: doc.responsibleEmail,
+    expirationDate: doc.expirationDate || null,
+    alertDate: doc.alertDate || null,
+    status: doc.status || "ACTIVE",
+    observations: doc.observations ?? null,
+    customData: doc.customData ?? null,
+    createdAt: doc.createdAt,
+  };
+}
+
 interface DocumentListProps {
   documents: SavedDocument[];
   groupBy?: "group" | "none";
+  onEditDocument?: (doc: SavedDocument) => void;
 }
 
-export function DocumentList({ documents, groupBy = "none" }: DocumentListProps) {
+export function DocumentList({ documents, groupBy = "none", onEditDocument }: DocumentListProps) {
   const [sendingEmails, setSendingEmails] = useState<Record<string, boolean>>({});
+  const [previewDoc, setPreviewDoc] = useState<SavedDocument | null>(null);
 
   const groupedDocuments = useMemo(() => {
     if (groupBy !== "group") {
@@ -93,6 +119,21 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
     }
   };
 
+  const handleOpenMailClient = (doc: SavedDocument) => {
+    const subject = encodeURIComponent(`Alerta de vencimento - ${doc.documentTypeName}`);
+    const body = encodeURIComponent(
+      `Documento: ${doc.documentTypeName}\nÓrgão: ${doc.orgaoName}\nExpira em: ${new Date(doc.expirationDate).toLocaleDateString("pt-BR")}\n\nVocê pode incluir outros destinatários neste e-mail.`
+    );
+    const to = doc.responsibleEmail ? encodeURIComponent(doc.responsibleEmail) : "";
+    const mailto = to ? `mailto:${doc.responsibleEmail}?subject=${subject}&body=${body}` : `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = mailto;
+  };
+
+  const handleExportPreview = async (format: "pdf" | "excel" | "csv") => {
+    if (!previewDoc) return;
+    await DocumentExportFactory.export(format, toDocumentData(previewDoc));
+  };
+
   const renderDocumentCard = (doc: SavedDocument) => {
         const expirationStatus = getExpirationStatus(
           doc.expirationDate,
@@ -108,9 +149,31 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
                   <FileText className="h-5 w-5" />
                 </div>
                 <div className="flex flex-col gap-1 flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg">{doc.documentTypeName}</h3>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDoc(doc)}
+                    className="font-semibold text-lg text-left hover:text-primary hover:underline focus:outline-none focus:underline"
+                    title="Abrir informações e anexos (exportar)"
+                  >
+                    {doc.documentTypeName}
+                  </button>
                   <p className="text-sm text-muted-foreground">{doc.orgaoName}</p>
                 </div>
+                {onEditDocument && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditDocument(doc);
+                    }}
+                    title="Editar documento"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -146,10 +209,10 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <User className="h-3 w-3" />
-                  Responsável
+                  Responsável / e-mail
                 </span>
-                <span className="text-sm font-medium truncate" title={doc.responsibleEmail}>
-                  {doc.responsibleName}
+                <span className="text-sm font-medium truncate" title={doc.responsibleEmail || undefined}>
+                  {doc.responsibleEmail ? `${doc.responsibleName} / ${doc.responsibleEmail}` : doc.responsibleName}
                 </span>
               </div>
 
@@ -175,22 +238,25 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Anexos:</p>
                 <div className="flex flex-wrap gap-2">
-                  {doc.attachments.map((attachment, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleDownloadAttachment(attachment.name)}
+                  {doc.attachments.map((att, idx) => (
+                    <a
+                      key={att.id || idx}
+                      href={att.filePath ? `/api/document-attachments/download?path=${encodeURIComponent(att.filePath)}` : undefined}
+                      download={att.name}
+                      target={att.filePath ? "_blank" : undefined}
+                      rel="noopener noreferrer"
                       className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md text-sm transition-colors"
                     >
-                      <FileText className="h-4 w-4" />
-                      <span className="truncate max-w-[200px]">{attachment.name}</span>
-                      <Download className="h-3 w-3" />
-                    </button>
+                      <FileText className="h-4 w-4 shrink-0" />
+                      <span className="truncate max-w-[200px]">{att.name}</span>
+                      <Download className="h-3 w-3 shrink-0" />
+                    </a>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="mt-4 pt-4 border-t flex gap-2">
+            <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -210,6 +276,16 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
                   </>
                 )}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => handleOpenMailClient(doc)}
+                title="Abrir e-mail para incluir outros destinatários"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Abrir e-mail
+              </Button>
               <QRCodeViewer
                 url={`${typeof window !== 'undefined' ? window.location.origin : ''}/document/${doc.id}`}
                 fileName={`${doc.documentTypeName} - ${doc.orgaoName}`}
@@ -220,8 +296,18 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
     );
   };
 
-  if (groupBy === "group") {
-    return (
+  return (
+    <>
+      {previewDoc && (
+        <DocumentPreviewModal
+          open={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          document={toDocumentData(previewDoc)}
+          onExport={handleExportPreview}
+          attachments={previewDoc.attachments?.map((a) => ({ name: a.name, filePath: a.filePath }))}
+        />
+      )}
+      {groupBy === "group" ? (
       <div className="grid gap-6">
         {Object.entries(groupedDocuments.grouped).map(([groupId, groupDocs]) => {
           const groupName = groupDocs[0]?.groupName || "Sem nome";
@@ -274,13 +360,12 @@ export function DocumentList({ documents, groupBy = "none" }: DocumentListProps)
           </div>
         )}
       </div>
-    );
-  }
-
-  return (
+    ) : (
     <div className="grid gap-4">
       {documents?.map((doc) => renderDocumentCard(doc))}
     </div>
+  )}
+    </>
   );
 }
 

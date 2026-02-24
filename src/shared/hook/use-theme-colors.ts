@@ -160,7 +160,7 @@ function normalizeColors(colors: ThemeColors): ThemeColors {
   };
 }
 
-const STORAGE_KEY = "sim-theme-colors";
+const STORAGE_KEY = "smartdoc-theme-colors";
 
 export function useThemeColors() {
   const [storedColors, setStoredColors] = useLocalStorage<ThemeColors>(

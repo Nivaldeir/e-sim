@@ -19,8 +19,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'SIM - Simple Inventory Management', 
-  description: 'SIM - Simple Inventory Management',
+  title: 'Smartdoc - Gerenciamento Seguro de Arquivos',
+  description: 'Smartdoc - Gerenciamento Seguro de Arquivos',
 }
 
 export default function RootLayout({

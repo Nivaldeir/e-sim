@@ -99,25 +99,25 @@ export function ThemeCustomizer() {
               Cores Principais
             </h3>
             <ColorPicker
-              label="Primary"
+              label="Cor Principal"
               value={colors.primary}
               onChange={(value) => updateColor("primary", value)}
               description="Cor principal do sistema"
             />
             <ColorPicker
-              label="Primary Foreground"
+              label="Cor do Texto sobre a Cor Principal"
               value={colors.primaryForeground}
               onChange={(value) => updateColor("primaryForeground", value)}
               description="Cor do texto sobre primary"
             />
             <ColorPicker
-              label="Secondary"
+              label="Cor Secundária"
               value={colors.secondary}
               onChange={(value) => updateColor("secondary", value)}
               description="Cor secundária"
             />
             <ColorPicker
-              label="Secondary Foreground"
+              label="Cor do Texto sobre a Cor Secundária"
               value={colors.secondaryForeground}
               onChange={(value) => updateColor("secondaryForeground", value)}
               description="Cor do texto sobre secondary"
@@ -129,25 +129,25 @@ export function ThemeCustomizer() {
               Cores de Destaque
             </h3>
             <ColorPicker
-              label="Accent"
+              label="Cor de Destaque"
               value={colors.accent}
               onChange={(value) => updateColor("accent", value)}
               description="Cor de destaque"
             />
             <ColorPicker
-              label="Accent Foreground"
+              label="Cor do Texto sobre a Cor de Destaque"
               value={colors.accentForeground}
               onChange={(value) => updateColor("accentForeground", value)}
               description="Cor do texto sobre accent"
             />
             <ColorPicker
-              label="Destructive"
+              label="Cor de Destruição"
               value={colors.destructive}
               onChange={(value) => updateColor("destructive", value)}
               description="Cor para ações destrutivas"
             />
             <ColorPicker
-              label="Destructive Foreground"
+              label="Cor do Texto sobre a Cor de Destruição"
               value={colors.destructiveForeground}
               onChange={(value) =>
                 updateColor("destructiveForeground", value)
@@ -160,7 +160,7 @@ export function ThemeCustomizer() {
         <div className="pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <h4 className="text-sm font-medium mb-2">Preview</h4>
+              <h4 className="text-sm font-medium mb-2">Visualização</h4>
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="default"
@@ -169,7 +169,7 @@ export function ThemeCustomizer() {
                     color: colors.primaryForeground 
                   }}
                 >
-                  Primary
+                  Cor Principal
                 </Button>
                 <Button 
                   variant="secondary"
@@ -178,7 +178,7 @@ export function ThemeCustomizer() {
                     color: colors.secondaryForeground 
                   }}
                 >
-                  Secondary
+                  Cor Secundária
                 </Button>
                 <Button variant="outline">Outline</Button>
                 <Button 
@@ -188,7 +188,7 @@ export function ThemeCustomizer() {
                     color: colors.destructiveForeground 
                   }}
                 >
-                  Destructive
+                  Cor de Destruição
                 </Button>
               </div>
             </div>

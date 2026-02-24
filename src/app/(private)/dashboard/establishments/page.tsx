@@ -2,12 +2,13 @@
 
 import { Suspense } from "react";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/shared/components/global/ui";
+import { Input } from "@/src/shared/components/global/ui/input";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
-import { Building2, FileText, Folder, Plus, Loader2, AlertCircle } from "lucide-react";
+import { Building2, FileText, Folder, Plus, Loader2, AlertCircle, Search, Printer } from "lucide-react";
 import { useEstablishmentsPage } from "./hooks/establishments.hook";
 
 function EstablishmentsPageContent() {
-  const { establishments, table, isLoading, error, refetch, handleOpenNewEstablishment, handleEditEstablishment } = useEstablishmentsPage();
+  const { establishments, table, isLoading, error, refetch, searchQuery, setSearchQuery, handleOpenNewEstablishment, handleEditEstablishment } = useEstablishmentsPage();
 
   if (isLoading) {
     return (
@@ -71,10 +72,22 @@ function EstablishmentsPageContent() {
         </Button>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar estabelecimento"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {establishments.length === 0 ? (
         <Card className="p-6">
           <p className="text-muted-foreground text-center">
-            Nenhum estabelecimento cadastrado
+            {searchQuery.trim()
+              ? "Nenhum estabelecimento encontrado para essa pesquisa."
+              : "Nenhum estabelecimento cadastrado"}
           </p>
         </Card>
       ) : (
@@ -122,32 +135,46 @@ function EstablishmentsPageContent() {
         </div>
       )}
 
-      <Card>
+      <Card id="visao-consolidada-print">
         <CardHeader className="px-6 pb-0">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-emerald-600" />
-            <CardTitle className="text-base">Visão Consolidada</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-emerald-600" />
+                <CardTitle className="text-base">Visão Consolidada</CardTitle>
+              </div>
+              <CardDescription>Visualize todos os estabelecimentos em uma tabela</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 print:hidden"
+              onClick={() => window.print()}
+              title="Imprimir filiais"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir filiais
+            </Button>
           </div>
-          <CardDescription>Visualize todos os estabelecimentos em uma tabela</CardDescription>
         </CardHeader>
         <CardContent className="px-6 pt-4">
           <DataTable table={table} />
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="print:hidden">
         <CardHeader className="px-6 pb-0">
-          <CardTitle className="text-base">Notas Abaixo</CardTitle>
+          <CardTitle className="text-base">Notas</CardTitle>
         </CardHeader>
         <CardContent className="px-6 pt-4 space-y-1 pb-4">
           <p className="text-xs text-muted-foreground">
-            Clique em um estabelecimento para ver seus arquivos
+            Clique em um estabelecimento para ver seus arquivos.
           </p>
           <p className="text-xs text-muted-foreground">
-            Use o Menu SIM (1-31) para navegar por categoria de arquivo
+            Use o Menu Smartdoc (Lateral) para navegar por categoria de arquivo.
           </p>
           <p className="text-xs text-muted-foreground">
-            Arquivos podem ser filtrados por estabelecimento ou categoria
+            Arquivos podem ser filtrados por estabelecimento ou categoria (use a lupa para pesquisar).
           </p>
         </CardContent>
       </Card>

@@ -135,7 +135,7 @@ export function SocialReasonModal({
                 <FormLabel>Razão social</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Ex: SANDVIK COROMANT DO BRASIL INDUSTRIA E COMERCIO DE FERRAMENTAS LTDA"
+                    placeholder="Ex: Tradição"
                     {...field}
                   />
                 </FormControl>
@@ -151,7 +151,7 @@ export function SocialReasonModal({
               <FormItem>
                 <FormLabel>Razão social curta</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: COROMANT" {...field} />
+                  <Input placeholder="Ex: TRAD" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

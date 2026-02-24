@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Eye,
   Loader2,
+  Printer,
 } from "lucide-react";
 
 import {
@@ -142,8 +143,6 @@ export default function DocumentsCalendarPage() {
       ? documentsByDate[selectedDateKey]
       : [];
 
-  console.log(selectedDocs)
-
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => {
       const d = new Date(prev);
@@ -195,8 +194,8 @@ export default function DocumentsCalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4" id="calendar-print-area">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-emerald-600" />
           <div className="flex flex-col">
@@ -208,6 +207,16 @@ export default function DocumentsCalendarPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 print:hidden"
+            onClick={() => window.print()}
+            title="Imprimir calendário"
+          >
+            <Printer className="h-4 w-4" />
+            Imprimir
+          </Button>
           <Button
             variant="outline"
             size="icon"
@@ -295,19 +304,15 @@ export default function DocumentsCalendarPage() {
             <div className="flex flex-wrap gap-3 pt-2 border-t border-dashed border-border/60 mt-2">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span className="h-3 w-3 rounded bg-emerald-100 border border-emerald-300" />
-                <span>Válido / longe de vencer</span>
+                <span>Verde / Válido</span>
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span className="h-3 w-3 rounded bg-yellow-100 border border-yellow-300" />
-                <span>Aviso (&lt;= 30 dias)</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="h-3 w-3 rounded bg-orange-100 border border-orange-300" />
-                <span>Crítico (&lt;= 7 dias)</span>
+                <span>Amarelo / Em Andamento</span>
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span className="h-3 w-3 rounded bg-red-100 border border-red-300" />
-                <span>Expirado</span>
+                <span>Vermelho / Expirado</span>
               </div>
             </div>
           </CardContent>

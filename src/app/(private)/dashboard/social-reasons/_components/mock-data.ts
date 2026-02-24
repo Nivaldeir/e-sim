@@ -10,8 +10,8 @@ export type SocialReason = {
 export const mockSocialReasons: SocialReason[] = [
   {
     id: "sr-1",
-    name: "SANDVIK COROMANT DO BRASIL INDUSTRIA E COMERCIO DE FERRAMENTAS LTDA",
-    shortName: "COROMANT",
+    name: "Tradição",
+    shortName: "TRAD",
     status: "active",
   },
   {

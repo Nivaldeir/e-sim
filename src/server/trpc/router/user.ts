@@ -23,6 +23,16 @@ export const userRouter = router({
       },
     });
 
+    // TODO: remover depois – por enquanto atribui permissão de admin ao registrar
+    const adminRole = await prisma.role.findUnique({
+      where: { name: "ADMINISTRADOR" },
+    });
+    if (adminRole) {
+      await prisma.userRole.create({
+        data: { userId: user.id, roleId: adminRole.id },
+      });
+    }
+
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }),

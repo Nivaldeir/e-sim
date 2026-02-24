@@ -22,6 +22,16 @@ import { useZodForm } from "@/src/shared/hook/use-zod-form";
 import { ModalProps } from "@/src/shared/types/modal";
 import { api } from "@/src/shared/context/trpc-context";
 
+const DESCRICAO_POR_TIPO: Record<string, string> = {
+  ADMINISTRADOR: "Acesso total ao sistema",
+  EDITOR: "Pode criar e editar documentos",
+  LEITOR: "Apenas visualização de documentos e Download",
+};
+
+function getDescricaoTipoAcesso(role: { name: string; description?: string | null }): string {
+  return DESCRICAO_POR_TIPO[role.name] ?? role.description ?? role.name;
+}
+
 type Role = {
   id: string;
   name: string;
@@ -173,7 +183,7 @@ export function AccessFormModal({ onClose, data }: ModalProps<AccessFormModalDat
                   <SelectContent>
                     {data.roles.map((role) => (
                       <SelectItem key={role.id} value={role.id}>
-                        {role.name}
+                        {getDescricaoTipoAcesso(role)}
                       </SelectItem>
                     ))}
                   </SelectContent>

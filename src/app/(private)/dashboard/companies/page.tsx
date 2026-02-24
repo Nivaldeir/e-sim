@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/shared/components/global/ui";
-import { Building2, Plus, Loader2, AlertCircle } from "lucide-react";
+import { Input } from "@/src/shared/components/global/ui/input";
+import { Building2, Plus, Loader2, AlertCircle, Search } from "lucide-react";
 import { useModal } from "@/src/shared/context/modal-context";
 import { CompanyModal } from "./_components/company-form";
 import { api } from "@/src/shared/context/trpc-context";
@@ -129,10 +130,22 @@ export default function CompaniesPage() {
         </Button>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar empresa"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {companies.length === 0 ? (
         <Card className="p-6">
           <p className="text-muted-foreground text-center">
-            Nenhuma empresa cadastrada
+            {search.trim()
+              ? "Nenhuma empresa encontrada para essa pesquisa."
+              : "Nenhuma empresa cadastrada"}
           </p>
         </Card>
       ) : (

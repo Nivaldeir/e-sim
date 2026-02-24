@@ -102,9 +102,13 @@ export const documentRouter = router({
                 description: true,
               },
             },
-            _count: {
+            attachments: {
               select: {
-                attachments: true,
+                id: true,
+                fileName: true,
+                filePath: true,
+                fileType: true,
+                fileSize: true,
               },
             },
           },

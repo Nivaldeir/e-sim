@@ -56,23 +56,11 @@ export function getExpirationStatus(
     };
   }
 
-  // Dentro do período de perigo (vermelho)
-  if (diffDays <= dangerDays) {
+  // Dentro do período de perigo ou aviso = Em Andamento (amarelo; antes de vencer)
+  if (diffDays <= dangerDays || diffDays <= warningDays) {
     return {
-      status: "danger",
-      color: "text-red-600",
-      bgColor: "bg-red-50",
-      borderColor: "border-red-300",
-      text: `Expira em ${diffDays} dia${diffDays !== 1 ? "s" : ""}`,
-      daysRemaining: diffDays,
-    };
-  }
-
-  // Dentro do período de aviso (amarelo)
-  if (diffDays <= warningDays) {
-    return {
-      status: "warning",
-      color: "text-yellow-600",
+      status: diffDays <= dangerDays ? "danger" : "warning",
+      color: "text-yellow-700",
       bgColor: "bg-yellow-50",
       borderColor: "border-yellow-300",
       text: `Expira em ${diffDays} dia${diffDays !== 1 ? "s" : ""}`,
@@ -80,12 +68,12 @@ export function getExpirationStatus(
     };
   }
 
-  // Seguro (verde)
+  // Seguro (branco – ainda não avisado)
   return {
     status: "safe",
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
+    color: "text-muted-foreground",
+    bgColor: "bg-background",
+    borderColor: "border-border",
     text: `Válido por mais ${diffDays} dia${diffDays !== 1 ? "s" : ""}`,
     daysRemaining: diffDays,
   };

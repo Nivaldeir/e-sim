@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useDataTable } from "@/src/shared/hook/use-data-table";
 import { getAccessColumns } from "../_components/columns";
 import { useModal } from "@/src/shared/context/modal-context";
@@ -11,6 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 export function useAccessesPage() {
   const { openModal } = useModal();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: users, isLoading, error, refetch } = api.access.listUsers.useQuery();
   const { data: roles } = api.access.listRoles.useQuery();
@@ -33,6 +34,17 @@ export function useAccessesPage() {
       companies: user.companies,
     }));
   }, [users]);
+
+  // Filtrar por pesquisa (nome ou e-mail)
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return tableData;
+    const q = searchQuery.trim().toLowerCase();
+    return tableData.filter(
+      (row: { name: string; email: string }) =>
+        (row.name || "").toLowerCase().includes(q) ||
+        (row.email || "").toLowerCase().includes(q)
+    );
+  }, [tableData, searchQuery]);
 
   const handleOpenNewAccess = useCallback(() => {
     openModal(
@@ -92,7 +104,7 @@ export function useAccessesPage() {
   const columns = useMemo(() => getAccessColumns(handleEditAccess, handleDeleteAccess), [handleEditAccess, handleDeleteAccess]);
 
   const { table } = useDataTable({
-    data: tableData,
+    data: filteredData,
     columns: columns as ColumnDef<{ id: any; name: any; email: any; roles: any; companies: any; }, any>[],
     pageCount: 1,
     initialState: {
@@ -111,6 +123,8 @@ export function useAccessesPage() {
     isLoading,
     error,
     refetch,
+    searchQuery,
+    setSearchQuery,
     handleOpenNewAccess,
     handleEditAccess,
     handleDeleteAccess,

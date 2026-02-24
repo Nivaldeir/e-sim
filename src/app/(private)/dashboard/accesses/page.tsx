@@ -1,10 +1,17 @@
 "use client";
 
 import { Suspense } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@/src/shared/components/global/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@/src/shared/components/global/ui";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
-import { Shield, Plus, Loader2, AlertCircle } from "lucide-react";
+import { Input } from "@/src/shared/components/global/ui/input";
+import { Shield, Plus, Loader2, AlertCircle, Search } from "lucide-react";
 import { useAccessesPage } from "./hooks/accesses.hook";
+
+const TIPOS_ACESSO_DESCRICOES: { nome: string; descricao: string }[] = [
+  { nome: "ADMINISTRADOR", descricao: "Acesso total ao sistema" },
+  { nome: "EDITOR", descricao: "Pode criar e editar documentos" },
+  { nome: "LEITOR", descricao: "Apenas visualização de documentos e Download" },
+];
 
 function AccessesPageContent() {
   const { 
@@ -12,9 +19,10 @@ function AccessesPageContent() {
     isLoading, 
     error, 
     refetch, 
+    searchQuery,
+    setSearchQuery,
     handleOpenNewAccess, 
     handleEditAccess,
-    roles 
   } = useAccessesPage();
 
   if (isLoading) {
@@ -81,6 +89,16 @@ function AccessesPageContent() {
         </Button>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar usuário"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       <Card>
         <CardHeader className="px-6 pb-0">
           <CardTitle className="text-base">Usuários cadastrados</CardTitle>
@@ -95,37 +113,12 @@ function AccessesPageContent() {
           <CardTitle className="text-base">Tipos de acesso</CardTitle>
         </CardHeader>
         <CardContent className="px-6 pt-4 space-y-2 pb-4">
-          {roles && roles.length > 0 ? (
-            roles.map((role: any) => (
-              <div key={role.id} className="flex items-start gap-2">
-                <div className="w-32 text-sm font-medium shrink-0">{role.name}:</div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    {role.description || `Função com ${role.permissions?.length || 0} permissão(ões)`}
-                  </p>
-                  {role.permissions && role.permissions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {role.permissions.slice(0, 5).map((perm: any) => (
-                        <Badge key={perm.id} variant="outline" className="text-[10px]">
-                          {perm.action}:{perm.resource}
-                        </Badge>
-                      ))}
-                      {role.permissions.length > 5 && (
-                        <Badge variant="outline" className="text-[10px]">
-                          +{role.permissions.length - 5} mais
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">Nenhum tipo de acesso configurado</p>
-              <p className="text-xs mt-1">Os tipos de acesso serão exibidos aqui quando criados</p>
+          {TIPOS_ACESSO_DESCRICOES.map((item) => (
+            <div key={item.nome} className="flex items-start gap-2">
+              <div className="w-32 text-sm font-medium shrink-0">{item.nome}:</div>
+              <p className="text-sm text-muted-foreground">{item.descricao}</p>
             </div>
-          )}
+          ))}
         </CardContent>
       </Card>
     </div>

@@ -5,8 +5,10 @@ import {
   Loader2,
   LayoutGrid,
   List,
+  Search,
 } from "lucide-react";
 import { Button } from "@/src/shared/components/global/ui";
+import { Input } from "@/src/shared/components/global/ui/input";
 import {
   Select,
   SelectContent,
@@ -19,7 +21,14 @@ import { DocumentExportButton } from "./_components/document-export-button";
 import { useDocumentsPage } from "./hooks/documents.hook";
 
 export default function DocumentsPage() {
-  const { documents, handleOpenNewDocument, isLoading: documentsLoading } = useDocumentsPage();
+  const {
+    documents,
+    handleOpenNewDocument,
+    handleEditDocument,
+    searchQuery,
+    setSearchQuery,
+    isLoading: documentsLoading,
+  } = useDocumentsPage();
   const [viewMode, setViewMode] = useState<"none" | "group">("none");
 
   const exportDocuments = useMemo(() => {
@@ -58,9 +67,18 @@ export default function DocumentsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Documentos</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative max-w-[220px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar documento"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as "none" | "group")}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Visualização" />
@@ -91,7 +109,11 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      <DocumentList documents={documents as any} groupBy={viewMode === "group" ? "group" : "none"} />
+      <DocumentList
+        documents={documents as any}
+        groupBy={viewMode === "group" ? "group" : "none"}
+        onEditDocument={handleEditDocument}
+      />
     </div>
   );
 }

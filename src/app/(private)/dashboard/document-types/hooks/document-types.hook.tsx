@@ -3,13 +3,14 @@
 import { useModal } from "@/src/shared/context/modal-context";
 import { TemplateFormModal } from "../_components/template-form-modal";
 import { api } from "@/src/shared/context/trpc-context";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useDataTable } from "@/src/shared/hook/use-data-table";
 import { createColumns } from "../_components/columns";
 import { ColumnDef } from "@tanstack/react-table";
 
 export function useDocumentTypesPage() {
   const { openModal } = useModal();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Buscar templates do banco
   const { data: templatesData, isLoading, refetch } = api.documentTemplate.list.useQuery({
@@ -20,6 +21,17 @@ export function useDocumentTypesPage() {
   const deleteMutation = api.documentTemplate.delete.useMutation();
 
   const templates = templatesData?.templates || [];
+
+  // Filtrar por pesquisa (nome ou descrição)
+  const filteredTemplates = useMemo(() => {
+    if (!searchQuery.trim()) return templates;
+    const q = searchQuery.trim().toLowerCase();
+    return templates.filter(
+      (t: { name?: string; description?: string }) =>
+        (t.name || "").toLowerCase().includes(q) ||
+        (t.description || "").toLowerCase().includes(q)
+    );
+  }, [templates, searchQuery]);
 
   // Mapear para formato da tabela
   const tableData = useMemo(() => {
@@ -107,6 +119,9 @@ export function useDocumentTypesPage() {
     table,
     tableData,
     templates,
+    filteredTemplates,
+    searchQuery,
+    setSearchQuery,
     isLoading,
     handleOpenNewTemplate,
     handleEditTemplate,
