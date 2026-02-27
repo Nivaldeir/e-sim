@@ -2,17 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/shared/config/auth";
 import { prisma } from "@/src/shared/lib/prisma";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
-
-const UPLOAD_DIR = join(process.cwd(), "uploads", "documents");
-
-async function ensureUploadDir() {
-  if (!existsSync(UPLOAD_DIR)) {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-  }
-}
+import { uploadToMinio } from "@/src/shared/lib/minio";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -22,8 +12,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    await ensureUploadDir();
-
     const formData = await request.formData();
     const files = formData.getAll("files") as File[];
     const documentId = formData.get("documentId") as string;
@@ -36,18 +24,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
     }
 
-    const uploadedAttachments = [];
+    const uploadedAttachments: Array<{
+      id: string;
+      fileName: string;
+      filePath: string;
+    }> = [];
+
+    const bucket = process.env.MINIO_BUCKET_DOCUMENTS || "documents";
 
     for (const file of files) {
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(2, 15);
-      const fileExtension = file.name.split(".").pop() || "";
-      const fileName = `${timestamp}-${randomStr}.${fileExtension}`;
-      const filePath = join(UPLOAD_DIR, fileName);
-
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      await writeFile(filePath, buffer);
+
+      const uploaded = await uploadToMinio({
+        bucket,
+        fileName: file.name,
+        buffer,
+        contentType: file.type,
+        prefix: documentId ? `documents/${documentId}` : "documents",
+      });
 
       const attachment = await prisma.documentAttachment.create({
         data: {
@@ -55,7 +50,7 @@ export async function POST(request: Request) {
           fileName: file.name,
           fileSize: file.size,
           fileType: file.type || "application/octet-stream",
-          filePath: filePath,
+          filePath: uploaded.url,
         },
       });
 
