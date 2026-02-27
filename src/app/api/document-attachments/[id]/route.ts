@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/shared/lib/prisma";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
+import {
+  parseMinioUrl,
+  getObjectFromMinio,
+} from "@/src/shared/lib/minio";
 
 export async function GET(
   request: Request,
@@ -17,19 +21,42 @@ export async function GET(
     });
 
     if (!attachment) {
-      return NextResponse.json({ message: "Anexo não encontrado" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Anexo não encontrado" },
+        { status: 404 }
+      );
     }
 
-    if (attachment.filePath && existsSync(attachment.filePath)) {
+    const filePath = attachment.filePath;
+    const headers = {
+      "Content-Type": attachment.fileType || "application/octet-stream",
+      "Content-Disposition": `inline; filename="${attachment.fileName}"`,
+      "Cache-Control": "public, max-age=3600",
+    };
+
+    if (filePath?.startsWith("http://") || filePath?.startsWith("https://")) {
+      const parsed = parseMinioUrl(filePath);
+      if (parsed) {
+        try {
+          const stream = await getObjectFromMinio(
+            parsed.bucket,
+            parsed.objectName
+          );
+          return new NextResponse(stream, { headers });
+        } catch (error) {
+          console.error("Erro ao buscar anexo no MinIO:", error);
+          return NextResponse.json(
+            { message: "Erro ao ler arquivo" },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
+    if (filePath && existsSync(filePath)) {
       try {
-        const fileBuffer = await readFile(attachment.filePath);
-        return new NextResponse(fileBuffer, {
-          headers: {
-            "Content-Type": attachment.fileType,
-            "Content-Disposition": `inline; filename="${attachment.fileName}"`,
-            "Cache-Control": "public, max-age=3600",
-          },
-        });
+        const fileBuffer = await readFile(filePath);
+        return new NextResponse(fileBuffer, { headers });
       } catch (error) {
         console.error("Erro ao ler anexo:", error);
         return NextResponse.json(
@@ -51,4 +78,3 @@ export async function GET(
     );
   }
 }
-

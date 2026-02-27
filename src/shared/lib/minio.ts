@@ -1,8 +1,22 @@
 import { Client } from "minio";
+import { Readable } from "stream";
 
-const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || "minio";
-const MINIO_PORT = Number(process.env.MINIO_PORT || "9000");
-const MINIO_USE_SSL = (process.env.MINIO_USE_SSL || "false").toLowerCase() === "true";
+const RAW_MINIO_URL = process.env.MINIO_URL;
+
+let MINIO_ENDPOINT: string;
+let MINIO_PORT: number;
+let MINIO_USE_SSL: boolean;
+
+if (RAW_MINIO_URL) {
+  const url = new URL(RAW_MINIO_URL);
+  MINIO_ENDPOINT = url.hostname;
+  MINIO_PORT = url.port ? Number(url.port) : url.protocol === "https:" ? 443 : 80;
+  MINIO_USE_SSL = url.protocol === "https:";
+} else {
+  MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || "minio";
+  MINIO_PORT = Number(process.env.MINIO_PORT || "9000");
+  MINIO_USE_SSL = (process.env.MINIO_USE_SSL || "false").toLowerCase() === "true";
+}
 
 const MINIO_ACCESS_KEY =
   process.env.MINIO_ACCESS_KEY || process.env.MINIO_ROOT_USER || "minio";
@@ -10,7 +24,9 @@ const MINIO_SECRET_KEY =
   process.env.MINIO_SECRET_KEY || process.env.MINIO_ROOT_PASSWORD || "minio12345";
 
 const PUBLIC_MINIO_URL =
-  process.env.MINIO_PUBLIC_URL || `http://localhost:${MINIO_PORT}`;
+  process.env.MINIO_PUBLIC_URL ||
+  RAW_MINIO_URL ||
+  `http://localhost:${MINIO_PORT}`;
 
 const minioClient = new Client({
   endPoint: MINIO_ENDPOINT,
@@ -79,5 +95,26 @@ export async function uploadToMinio({
     objectName,
     url,
   };
+}
+
+export function parseMinioUrl(url: string): { bucket: string; objectName: string } | null {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.replace(/^\/+/, "").split("/");
+    if (parts.length < 2) return null;
+    const bucket = parts[0];
+    const objectName = parts.slice(1).join("/");
+    return { bucket, objectName };
+  } catch {
+    return null;
+  }
+}
+
+export async function getObjectFromMinio(
+  bucket: string,
+  objectName: string
+): Promise<ReadableStream> {
+  const stream = await minioClient.getObject(bucket, objectName);
+  return Readable.toWeb(stream as NodeJS.Readable) as ReadableStream;
 }
 
