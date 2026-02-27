@@ -19,14 +19,20 @@ export interface DocumentExpirationData {
 
 export async function sendDocumentExpirationEmail(
   document: DocumentExpirationData,
-  recipientEmail?: string
+  recipientEmails?: string | string[]
 ) {
   const EMAIL_TO_RECEIVE = process.env.EMAIL_TO_RECEIVE;
   const SYSTEM_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
-  const to = recipientEmail || document.responsibleEmail || EMAIL_TO_RECEIVE;
+  const single = typeof recipientEmails === "string" ? recipientEmails : undefined;
+  const list = Array.isArray(recipientEmails)
+    ? recipientEmails
+    : single
+      ? [single]
+      : [document.responsibleEmail, EMAIL_TO_RECEIVE].filter(Boolean) as string[];
+  const to = list.length > 0 ? list : [document.responsibleEmail || EMAIL_TO_RECEIVE].filter(Boolean);
 
-  if (!to) {
+  if (to.length === 0 || !to[0]) {
     throw new Error("Email do destinatário não configurado");
   }
 
@@ -72,7 +78,7 @@ export async function sendDocumentExpirationEmail(
   });
 
   await sendEmail({
-    to,
+    to: to.length === 1 ? to[0]! : to,
     subject: `⚠️ Alerta: Documento "${document.templateName}" próximo do vencimento`,
     html,
   });

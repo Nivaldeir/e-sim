@@ -33,11 +33,12 @@ export const documentRouter = router({
         status: z.enum(["ACTIVE", "EXPIRED", "PENDING", "CANCELLED"]).optional(),
         templateId: z.string().optional(),
         companyId: z.string().optional(),
+        establishmentId: z.string().optional(),
         organizationId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      const { page, pageSize, search, status, templateId, companyId, organizationId } = input;
+      const { page, pageSize, search, status, templateId, companyId, establishmentId, organizationId } = input;
       const skip = (page - 1) * pageSize;
 
       const where = {
@@ -47,6 +48,7 @@ export const documentRouter = router({
         ...(status && { status }),
         ...(templateId && { templateId }),
         ...(companyId && { companyId }),
+        ...(establishmentId && { establishmentId }),
         ...(organizationId && { organizationId }),
       };
 
@@ -299,6 +301,22 @@ export const documentRouter = router({
         where: { id: input.id },
       });
 
+      return { success: true };
+    }),
+
+  deleteAttachment: protectedProcedure
+    .input(z.object({ attachmentId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const attachment = await ctx.prisma.documentAttachment.findUnique({
+        where: { id: input.attachmentId },
+        select: { documentId: true },
+      });
+      if (!attachment) {
+        throw new Error("Anexo não encontrado");
+      }
+      await ctx.prisma.documentAttachment.delete({
+        where: { id: input.attachmentId },
+      });
       return { success: true };
     }),
 

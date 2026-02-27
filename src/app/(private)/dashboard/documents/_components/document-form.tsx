@@ -91,6 +91,7 @@ export function DocumentFormModal({
   const groups = groupsData?.groups || [];
 
   const { openModal } = useModal();
+  const utils = api.useUtils();
 
   const { data: existingDocument, isLoading: documentLoading } = api.document.getById.useQuery(
     { id: data?.documentId! },
@@ -183,9 +184,47 @@ export function DocumentFormModal({
   });
 
   const updateDocumentMutation = api.document.update.useMutation({
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      const documentId = variables.id;
+      if (attachments.length > 0 && documentId) {
+        try {
+          setIsUploading(true);
+          const formData = new FormData();
+          attachments.forEach((file) => {
+            formData.append("files", file);
+          });
+          formData.append("documentId", documentId);
+          const uploadResponse = await fetch("/api/document-attachments/upload", {
+            method: "POST",
+            body: formData,
+          });
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(errorData.error || "Erro ao fazer upload dos anexos");
+          }
+        } catch (error) {
+          console.error("Erro ao fazer upload dos anexos:", error);
+          form.setError("root", {
+            message: error instanceof Error ? error.message : "Erro ao fazer upload dos anexos",
+          });
+          setIsUploading(false);
+          return;
+        }
+        setIsUploading(false);
+      }
       data.onSuccess();
       onClose();
+    },
+    onError: (error) => {
+      form.setError("root", { message: error.message });
+    },
+  });
+
+  const deleteAttachmentMutation = api.document.deleteAttachment.useMutation({
+    onSuccess: () => {
+      if (data?.documentId) {
+        utils.document.getById.invalidate({ id: data.documentId });
+      }
     },
     onError: (error) => {
       form.setError("root", { message: error.message });
@@ -728,58 +767,95 @@ export function DocumentFormModal({
               </div>
             )}
 
-            {!isEditing && (
             <div>
               <FormLabel>Anexos</FormLabel>
-              <div className="mt-2 space-y-2">
-                <input
-                  type="file"
-                  multiple
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Adicionar arquivo
-                </Button>
-
-                {attachments.length > 0 && (
-                  <div className="border rounded-md p-2 space-y-2">
-                    {attachments.map((file: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 bg-muted rounded"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <FileText className="h-4 w-4 shrink-0" />
-                          <span className="text-sm truncate">{file.name}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            ({(file.size / 1024).toFixed(1)} KB)
-                          </span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeAttachment(index)}
-                          className="h-6 w-6 p-0 shrink-0"
+              <div className="mt-2 space-y-3">
+                {isEditing && existingDocument?.attachments?.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Anexos atuais</p>
+                    <div className="border rounded-md p-2 space-y-2">
+                      {(existingDocument as any).attachments.map((att: { id: string; fileName: string; fileSize: number }) => (
+                        <div
+                          key={att.id}
+                          className="flex items-center justify-between p-2 bg-muted rounded"
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <FileText className="h-4 w-4 shrink-0" />
+                            <span className="text-sm truncate">{att.fileName}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              ({(att.fileSize / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteAttachmentMutation.mutate({ attachmentId: att.id })}
+                            disabled={deleteAttachmentMutation.isPending}
+                            className="h-6 w-6 p-0 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Remover anexo"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    {isEditing ? "Adicionar novos arquivos" : "Arquivos do documento"}
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Adicionar arquivo
+                  </Button>
+
+                  {attachments.length > 0 && (
+                    <div className="border rounded-md p-2 space-y-2">
+                      {attachments.map((file: File, index: number) => (
+                        <div
+                          key={`new-${index}`}
+                          className="flex items-center justify-between p-2 bg-muted rounded"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <FileText className="h-4 w-4 shrink-0" />
+                            <span className="text-sm truncate">{file.name}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              ({(file.size / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAttachment(index)}
+                            className="h-6 w-6 p-0 shrink-0"
+                            title="Remover da lista"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            )}
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button

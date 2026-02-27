@@ -148,6 +148,7 @@ model Company {
   id                    String        @id @default(cuid())
   name                  String
   cnpj                  String        @unique
+  logoUrl               String?       @map("logo_url")
   stateRegistration     String?       @map("state_registration")
   municipalRegistration String?       @map("municipal_registration")
   status                CompanyStatus @default(ACTIVE)
@@ -339,13 +340,15 @@ enum FieldType {
 // ============================================
 // MÓDULO DE DOCUMENTOS
 // ============================================
+// Documento possui associação por Empresa (Company) e por Estabelecimento (Establishment).
+// O estabelecimento deve pertencer à empresa indicada (Establishment.companyId = Document.companyId).
 
 model Document {
   id              String  @id @default(cuid())
   templateId      String  @map("template_id")
   organizationId  String  @map("organization_id")
-  companyId       String  @map("company_id")
-  establishmentId String  @map("establishment_id")
+  companyId       String  @map("company_id")       // Empresa
+  establishmentId String  @map("establishment_id") // Estabelecimento (pertence à empresa)
   responsibleId   String  @map("responsible_id")
   chiefId         String? @map("chief_id")
 
@@ -371,11 +374,11 @@ model Document {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relacionamentos
+  // Relacionamentos (documento associado à empresa e ao estabelecimento)
   template      DocumentTemplate     @relation(fields: [templateId], references: [id])
   organization  Organization         @relation(fields: [organizationId], references: [id])
-  company       Company              @relation(fields: [companyId], references: [id])
-  establishment Establishment        @relation(fields: [establishmentId], references: [id])
+  company       Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  establishment Establishment        @relation(fields: [establishmentId], references: [id], onDelete: Restrict)
   responsible   User                 @relation("ResponsibleDocuments", fields: [responsibleId], references: [id])
   chief         User?                @relation("ChiefDocuments", fields: [chiefId], references: [id])
   group         DocumentGroup?       @relation(fields: [groupId], references: [id])
@@ -386,6 +389,7 @@ model Document {
   @@index([organizationId])
   @@index([companyId])
   @@index([establishmentId])
+  @@index([companyId, establishmentId])
   @@index([responsibleId])
   @@index([chiefId])
   @@index([groupId])

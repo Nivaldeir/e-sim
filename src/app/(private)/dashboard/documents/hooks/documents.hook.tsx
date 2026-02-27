@@ -2,17 +2,20 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useModal } from "@/src/shared/context/modal-context";
+import { useSelectedCompany } from "@/src/shared/context/company-context";
 import { DocumentFormModal } from "../_components/document-form";
 import { api } from "@/src/shared/context/trpc-context";
 
 export function useDocumentsPage() {
   const { openModal } = useModal();
+  const { selectedCompanyId } = useSelectedCompany();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Buscar documentos do banco
+  // Buscar documentos do banco (filtrado pela empresa selecionada)
   const { data: documentsData, isLoading, error, refetch } = api.document.list.useQuery({
     page: 1,
     pageSize: 100,
+    ...(selectedCompanyId ? { companyId: selectedCompanyId } : {}),
   });
 
   const documents = documentsData?.documents || [];

@@ -9,7 +9,9 @@ config({ path: resolve(process.cwd(), ".env") });
 const dbUrl = process.env.DATABASE_URL;
 
 if (!dbUrl) {
-  throw new Error("DATABASE_URL não encontrada no .env");
+  throw new Error(
+    "DATABASE_URL deve ser definida no arquivo .env ou na variável de ambiente"
+  );
 }
 
 export default defineConfig({

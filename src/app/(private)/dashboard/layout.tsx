@@ -6,6 +6,7 @@ import { Separator } from "@/src/shared/components/global/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/src/shared/components/global/ui/sidebar";
 import { GlobalLoading } from "@/src/shared/components/global/global-loading";
 import { BreadcrumbProvider } from "@/src/shared/context/breadcrumb-context";
+import { CompanyProvider } from "@/src/shared/context/company-context";
 import { NoCompanyAlert } from "@/src/shared/components/global/no-company-alert";
 import { useUserCompanies } from "@/src/shared/hook/use-user-companies";
 
@@ -13,8 +14,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { hasNoCompany } = useUserCompanies();
 
   return (
-    <SidebarProvider>
-      <BreadcrumbProvider>
+    <CompanyProvider>
+      <SidebarProvider>
+        <BreadcrumbProvider>
         <AppSidebar />
         <SidebarInset className="max-h-full overflow-hidden">
           <header className="flex h-16 shrink-0 items-center gap-2">
@@ -34,6 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarInset>
         {/* <GlobalLoading /> */}
       </BreadcrumbProvider>
-    </SidebarProvider>
+      </SidebarProvider>
+    </CompanyProvider>
   );
 }

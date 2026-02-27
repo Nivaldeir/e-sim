@@ -3,14 +3,15 @@
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/shared/components/global/ui"
 import { Building2, FileSpreadsheet, FileText, Folder, StickyNote, ChevronRight } from "lucide-react"
 import { api } from "@/src/shared/context/trpc-context"
+import { useSelectedCompany } from "@/src/shared/context/company-context"
 import Link from "next/link"
 
 export default function DashboardPage() {
+  const { selectedCompany } = useSelectedCompany();
   const { data: stats, isLoading: statsLoading } = api.dashboard.getStats.useQuery();
   const { data: latestFiles, isLoading: filesLoading } = api.dashboard.getLatestDocuments.useQuery({ limit: 5 });
   const { data: establishments, isLoading: establishmentsLoading } = api.dashboard.getEstablishmentsStats.useQuery();
-  const { data: companiesData } = api.company.list.useQuery({ page: 1, pageSize: 1 });
-  const companyName = companiesData?.companies?.[0]?.name ?? "Empresa";
+  const companyName = selectedCompany?.name ?? "Empresa";
 
   const summaryCards = [
     {
@@ -96,6 +97,7 @@ export default function DashboardPage() {
                 <Link
                   key={file.id}
                   href={`/document/${file.id}`}
+                  target="_blank"
                   className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2 hover:bg-muted/60 transition-colors"
                   title="Abrir documento"
                 >

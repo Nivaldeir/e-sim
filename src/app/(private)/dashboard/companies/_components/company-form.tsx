@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/src/shared/components/global/ui";
 import {
@@ -21,11 +22,13 @@ import {
 import { useZodForm } from "@/src/shared/hook/use-zod-form";
 import { ModalProps } from "@/src/shared/types/modal";
 import { api } from "@/src/shared/context/trpc-context";
+import { ImagePlus, X } from "lucide-react";
 
 interface CompanyData {
   id: string;
   name: string;
   cnpj: string;
+  logoUrl?: string | null;
   stateRegistration: string;
   municipalRegistration: string;
   status: "ACTIVE" | "INACTIVE";
@@ -43,6 +46,7 @@ const companySchema = z.object({
     .max(120, "Máximo de 120 caracteres"),
   status: z.enum(["ACTIVE", "INACTIVE"]),
   cnpj: z.string().min(1, "CNPJ é obrigatório"),
+  logoUrl: z.string().optional(),
   stateRegistration: z.string().optional(),
   municipalRegistration: z.string().optional(),
 });
@@ -55,6 +59,7 @@ export function CompanyModal({ onClose, data }: ModalProps<CompanyModalData>) {
       name: data?.company?.name || "",
       status: data?.company?.status || "ACTIVE",
       cnpj: data?.company?.cnpj || "",
+      logoUrl: data?.company?.logoUrl || "",
       stateRegistration: data?.company?.stateRegistration || "",
       municipalRegistration: data?.company?.municipalRegistration || "",
     },
@@ -94,6 +99,9 @@ export function CompanyModal({ onClose, data }: ModalProps<CompanyModalData>) {
     },
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+
   const handleSubmit = (values: CompanyFormValues) => {
     if (isEditing && data.company) {
       updateMutation.mutate({
@@ -104,6 +112,31 @@ export function CompanyModal({ onClose, data }: ModalProps<CompanyModalData>) {
       createMutation.mutate(values);
     }
   };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("logo", file);
+      const res = await fetch("/api/company-logo/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Erro no upload");
+      form.setValue("logoUrl", json.logoUrl);
+    } catch (err) {
+      form.setError("logoUrl", { message: err instanceof Error ? err.message : "Erro ao enviar logo" });
+    } finally {
+      setLogoUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const logoUrl = form.watch("logoUrl");
+  const logoPreviewUrl = logoUrl ? `/api/company-logo/${logoUrl}` : null;
 
   const handleDelete = () => {
     if (data.company && confirm("Tem certeza que deseja excluir esta empresa?")) {
@@ -157,7 +190,7 @@ export function CompanyModal({ onClose, data }: ModalProps<CompanyModalData>) {
                 <FormLabel>Status</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger size="default">
+                    <SelectTrigger size="default" className="w-full">
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -165,6 +198,71 @@ export function CompanyModal({ onClose, data }: ModalProps<CompanyModalData>) {
                       <SelectItem value="INACTIVE">Inativo</SelectItem>
                     </SelectContent>
                   </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="logoUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Logo (opcional)</FormLabel>
+                <FormControl>
+                  <div className="flex flex-col gap-2 w-full">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      className="hidden w-full"
+                      onChange={handleLogoChange}
+                      disabled={logoUploading}
+                    />
+                    {logoPreviewUrl ? (
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="relative size-20 rounded-lg border bg-muted overflow-hidden shrink-0">
+                          <img
+                            src={logoPreviewUrl}
+                            alt="Logo"
+                            className="size-full object-contain"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={logoUploading}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Trocar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={logoUploading}
+                            onClick={() => form.setValue("logoUrl", "")}
+                          >
+                            <X className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={logoUploading}
+                        className="w-full"
+                      >
+                        <ImagePlus className="size-4 mr-2" />
+                        {logoUploading ? "Enviando..." : "Enviar logo"}
+                      </Button>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

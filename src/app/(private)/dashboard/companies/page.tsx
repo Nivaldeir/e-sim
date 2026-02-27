@@ -52,6 +52,7 @@ export default function CompaniesPage() {
           id: company.id,
           name: company.name,
           cnpj: company.cnpj,
+          logoUrl: company.logoUrl ?? undefined,
           stateRegistration: company.stateRegistration || "",
           municipalRegistration: company.municipalRegistration || "",
           status: company.status,
@@ -157,15 +158,30 @@ export default function CompaniesPage() {
               onClick={() => handleEditCompany(company)}
             >
               <CardHeader className="px-6 pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">Empresa</span>
-                    <CardTitle className="text-base">
-                      {company.name}
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {company.establishments.length} estabelecimento(s)
-                    </CardDescription>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    {company.logoUrl ? (
+                      <div className="size-12 shrink-0 rounded-lg border bg-muted overflow-hidden">
+                        <img
+                          src={`/api/company-logo/${company.logoUrl}`}
+                          alt=""
+                          className="size-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="size-12 shrink-0 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <Building2 className="size-6" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="text-xs text-muted-foreground">Empresa</span>
+                      <CardTitle className="text-base">
+                        {company.name}
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        {company.establishments.length} estabelecimento(s)
+                      </CardDescription>
+                    </div>
                   </div>
                   <Badge
                     variant={company.status === "ACTIVE" ? "default" : "secondary"}

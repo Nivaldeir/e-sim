@@ -4,6 +4,7 @@ import { protectedProcedure, router } from "../trpc";
 const createCompanySchema = z.object({
   name: z.string().min(1).max(120),
   cnpj: z.string().min(1),
+  logoUrl: z.string().optional(),
   stateRegistration: z.string().optional(),
   municipalRegistration: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),

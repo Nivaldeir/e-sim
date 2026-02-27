@@ -203,13 +203,8 @@ async function main() {
 
   console.log(`✅ Usuário admin criado: ${adminUser.email} com role ADMINISTRADOR`);
 
-  // 5. Associar usuário admin às empresas (opcional - para não ter o aviso de sem empresa)
-  console.log('🏢 Associando usuário admin às empresas...');
-  
-  // Criar empresas primeiro (se ainda não existirem)
-  const companies = [];
-  
-  // Empresa 1
+  // 5. Uma empresa e estabelecimento para o admin (evita aviso de "sem empresa")
+  console.log('🏢 Criando empresa para o admin...');
   const company1 = await prisma.company.upsert({
     where: { cnpj: '60.680.279/0001-23' },
     update: {},
@@ -221,125 +216,7 @@ async function main() {
       status: 'ACTIVE',
     },
   });
-  companies.push(company1);
 
-  // Associar admin à primeira empresa
-  await prisma.userCompany.upsert({
-    where: {
-      userId_companyId: {
-        userId: adminUser.id,
-        companyId: company1.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: adminUser.id,
-      companyId: company1.id,
-      code: 'ADM001',
-    },
-  });
-
-  // 6. Criar usuários adicionais com diferentes roles
-  console.log('👥 Criando usuários adicionais...');
-  
-  // Usuário Editor
-  const editorUser = await prisma.user.upsert({
-    where: { email: 'editor@sim.com' },
-    update: {},
-    create: {
-      name: 'João Editor',
-      email: 'editor@sim.com',
-      password: await hash('editor123', 10),
-      emailVerified: new Date(),
-    },
-  });
-
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
-        userId: editorUser.id,
-        roleId: editorRole.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: editorUser.id,
-      roleId: editorRole.id,
-    },
-  });
-
-  // Usuário Leitor
-  const readerUser = await prisma.user.upsert({
-    where: { email: 'leitor@sim.com' },
-    update: {},
-    create: {
-      name: 'Maria Leitora',
-      email: 'leitor@sim.com',
-      password: await hash('leitor123', 10),
-      emailVerified: new Date(),
-    },
-  });
-
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
-        userId: readerUser.id,
-        roleId: readerRole.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: readerUser.id,
-      roleId: readerRole.id,
-    },
-  });
-
-  // Usuário Editor 2
-  const editorUser2 = await prisma.user.upsert({
-    where: { email: 'editor2@sim.com' },
-    update: {},
-    create: {
-      name: 'Pedro Editor',
-      email: 'editor2@sim.com',
-      password: await hash('editor123', 10),
-      emailVerified: new Date(),
-    },
-  });
-
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
-        userId: editorUser2.id,
-        roleId: editorRole.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: editorUser2.id,
-      roleId: editorRole.id,
-    },
-  });
-
-  console.log('✅ Usuários criados com suas respectivas roles');
-
-  // 7. Criar empresas e estabelecimentos adicionais (se ainda não existirem)
-  console.log('🏢 Criando empresas e estabelecimentos adicionais...');
-  
-  // Empresa 2 (se ainda não existe)
-  const company2 = await prisma.company.upsert({
-    where: { cnpj: '12.345.678/0001-90' },
-    update: {},
-    create: {
-      name: 'TECH SOLUTIONS LTDA',
-      cnpj: '12.345.678/0001-90',
-      stateRegistration: '123456789012',
-      municipalRegistration: '987654-3',
-      status: 'ACTIVE',
-    },
-  });
-  companies.push(company2);
-
-  // Estabelecimento da Empresa 1
   await prisma.establishment.upsert({
     where: { cnpj: '60.680.279/0001-23' },
     update: {},
@@ -357,216 +234,27 @@ async function main() {
     },
   });
 
-  // Estabelecimento da Empresa 2
-  await prisma.establishment.upsert({
-    where: { cnpj: '12.345.678/0001-90' },
-    update: {},
-    create: {
-      companyId: company2.id,
-      name: 'Filial Rio de Janeiro',
-      code: 'FIL-RJ',
-      cnpj: '12.345.678/0001-90',
-      address: 'Av. Atlântica, 456',
-      district: 'Copacabana',
-      city: 'Rio de Janeiro',
-      state: 'RJ',
-      zipCode: '22021-000',
-      status: 'ACTIVE',
-    },
-  });
-
-  // Empresa 3
-  const company3 = await prisma.company.upsert({
-    where: { cnpj: '98.765.432/0001-10' },
-    update: {},
-    create: {
-      name: 'INDUSTRIAL BRASIL S.A.',
-      cnpj: '98.765.432/0001-10',
-      stateRegistration: '987654321098',
-      municipalRegistration: '456789-1',
-      status: 'ACTIVE',
-    },
-  });
-  companies.push(company3);
-
-  await prisma.establishment.upsert({
-    where: { cnpj: '98.765.432/0001-10' },
-    update: {},
-    create: {
-      companyId: company3.id,
-      name: 'Unidade Belo Horizonte',
-      code: 'UNI-BH',
-      cnpj: '98.765.432/0001-10',
-      address: 'Rua da Bahia, 789',
-      district: 'Centro',
-      city: 'Belo Horizonte',
-      state: 'MG',
-      zipCode: '30160-012',
-      status: 'ACTIVE',
-    },
-  });
-
-  // 8. Associar usuários às empresas
-  console.log('🔗 Associando usuários às empresas...');
-  
   await prisma.userCompany.upsert({
     where: {
       userId_companyId: {
-        userId: editorUser.id,
+        userId: adminUser.id,
         companyId: company1.id,
       },
     },
     update: {},
     create: {
-      userId: editorUser.id,
+      userId: adminUser.id,
       companyId: company1.id,
-      code: 'EDT001',
+      code: 'ADM001',
     },
   });
-
-  await prisma.userCompany.upsert({
-    where: {
-      userId_companyId: {
-        userId: editorUser2.id,
-        companyId: company2.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: editorUser2.id,
-      companyId: company2.id,
-      code: 'EDT002',
-    },
-  });
-
-  await prisma.userCompany.upsert({
-    where: {
-      userId_companyId: {
-        userId: readerUser.id,
-        companyId: company3.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: readerUser.id,
-      companyId: company3.id,
-      code: 'LEI001',
-    },
-  });
-
-  // 9. Criar órgãos de exemplo
-  console.log('🏛️ Criando órgão de exemplo...');
-  const organization = await prisma.organization.create({
-    data: {
-      name: 'PREFEITURA MUNICIPAL DE SÃO PAULO',
-      shortName: 'PMSP',
-      type: 'MUNICIPAL',
-      city: 'São Paulo',
-      state: 'SP',
-      status: 'ACTIVE',
-    },
-  });
-
-  // 9. Criar razão social de exemplo
-  console.log('📋 Criando razão social de exemplo...');
-  await prisma.socialReason.create({
-    data: {
-      name: 'Tradição',
-      shortName: 'TRAD',
-      status: 'ACTIVE',
-    },
-  });
-
-  // 10. Criar template de Extintor de Incêndio
-  console.log('🔥 Criando template de Extintor de Incêndio...');
-  let extintorTemplate = await prisma.documentTemplate.findFirst({
-    where: { name: 'Extintor de Incêndio' },
-    include: { fields: true },
-  });
-
-  if (!extintorTemplate) {
-    extintorTemplate = await prisma.documentTemplate.create({
-      data: {
-        name: 'Extintor de Incêndio',
-        description: 'Template para monitoramento de extintores de incêndio e seus vencimentos',
-        classification: 'Segurança',
-        isDefault: false,
-        fields: {
-          create: [
-            {
-              name: 'numero_serie',
-              label: 'Número de Série',
-              type: 'TEXT',
-              required: true,
-              order: 1,
-            },
-            {
-              name: 'capacidade',
-              label: 'Capacidade (kg)',
-              type: 'NUMBER',
-              required: true,
-              order: 2,
-            },
-            {
-              name: 'tipo',
-              label: 'Tipo de Extintor',
-              type: 'SELECT',
-              required: true,
-              order: 3,
-              options: ['Água', 'Espuma', 'Pó Químico', 'CO2', 'Pó ABC'],
-            },
-            {
-              name: 'localizacao',
-              label: 'Localização',
-              type: 'TEXT',
-              required: true,
-              order: 4,
-            },
-            {
-              name: 'fabricante',
-              label: 'Fabricante',
-              type: 'TEXT',
-              required: false,
-              order: 5,
-            },
-            {
-              name: 'data_fabricacao',
-              label: 'Data de Fabricação',
-              type: 'DATE',
-              required: false,
-              order: 6,
-            },
-          ],
-        },
-      },
-      include: {
-        fields: true,
-      },
-    });
-    console.log(`✅ Template "${extintorTemplate.name}" criado com ${extintorTemplate.fields.length} campos`);
-  } else {
-    console.log(`ℹ️ Template "${extintorTemplate.name}" já existe com ${extintorTemplate.fields.length} campos`);
-  }
 
   console.log('✅ Seed concluído com sucesso!');
   console.log('\n📊 Resumo:');
   console.log(`  - ${permissions.length} permissões criadas`);
   console.log(`  - 3 roles criadas (ADMINISTRADOR, EDITOR, LEITOR)`);
-  console.log(`  - Role ADMINISTRADOR possui todas as ${permissions.length} permissões`);
-  console.log(`  - 4 usuários criados:`);
-  console.log(`    • admin@sim.com → ADMINISTRADOR (senha: admin123)`);
-  console.log(`    • editor@sim.com → EDITOR (senha: editor123)`);
-  console.log(`    • editor2@sim.com → EDITOR (senha: editor123)`);
-  console.log(`    • leitor@sim.com → LEITOR (senha: leitor123)`);
-  console.log(`  - ${companies.length} empresas criadas com seus estabelecimentos`);
-  console.log(`  - Usuários associados às empresas com códigos:`);
-  console.log(`    • admin@sim.com → ${company1.name} (ADM001)`);
-  console.log(`    • editor@sim.com → ${company1.name} (EDT001)`);
-  console.log(`    • editor2@sim.com → ${company2.name} (EDT002)`);
-  console.log(`    • leitor@sim.com → ${company3.name} (LEI001)`);
-  console.log(`  - 1 órgão criado`);
-  console.log(`  - 1 razão social criada`);
-  console.log(`  - 1 template de documento criado (Extintor de Incêndio)`);
+  console.log(`  - 1 usuário: admin@sim.com com role ADMINISTRADOR`);
+  console.log(`  - 1 empresa (${company1.name}) com 1 estabelecimento, admin associado (ADM001)`);
   console.log('\n🔑 Credenciais do Admin:');
   console.log(`  Email: admin@sim.com`);
   console.log(`  Senha: admin123`);

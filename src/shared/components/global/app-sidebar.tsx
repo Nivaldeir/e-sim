@@ -16,6 +16,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/src/shared/components/global/ui/dropdown-menu"
@@ -39,6 +40,8 @@ import {
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "./ui/button"
+import { api } from "../../context/trpc-context"
+import { useSelectedCompany } from "@/src/shared/context/company-context"
 
 const data = {
   navMain: [
@@ -108,6 +111,13 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { selectedCompany, setSelectedCompany } = useSelectedCompany();
+  const { data: companiesData } = api.company.list.useQuery({
+    page: 1,
+    pageSize: 10,
+  });
+  const companies = companiesData?.companies ?? [];
+  const displayName = selectedCompany?.name ?? companies[0]?.name ?? "Workspace";
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -124,11 +134,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                       <Building2 className="size-4" />
                     </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate text-xs text-muted-foreground">Workspace</span>
+                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                      <span className="truncate text-xs font-medium text-foreground">{displayName}</span>
+                      <span className="truncate text-[10px] text-muted-foreground">
+                        {companies.length > 0 ? `${companies.length} empresa${companies.length !== 1 ? "s" : ""}` : "Empresas"}
+                      </span>
                     </div>
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4 opacity-50" />
+                  <ChevronsUpDown className="ml-auto size-4 opacity-50 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -138,15 +151,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
-                  <span>Workspaces</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-4 h-4 rounded-sm cursor-pointer"
-                  >
-                    <PlusIcon className="size-4" />
+                  <span>Empresas</span>
+                  <Button variant="outline" size="icon" className="w-6 h-6 rounded-sm cursor-pointer" asChild>
+                    <Link href="/dashboard/companies">
+                      <PlusIcon className="size-3.5" />
+                    </Link>
                   </Button>
                 </DropdownMenuLabel>
+                {companies.length > 0 ? (
+                  companies.slice(0, 8).map((company: { id: string; name: string }) => (
+                    <DropdownMenuItem
+                      key={company.id}
+                      onClick={() => setSelectedCompany({ id: company.id, name: company.name })}
+                      className="cursor-pointer"
+                    >
+                      {company.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : null}
+                {companies.length > 0 && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/companies" className="cursor-pointer">
+                      Ver todas as empresas
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {companies.length === 0 && (
+                  <DropdownMenuLabel className="font-normal text-muted-foreground">
+                    Nenhuma empresa cadastrada
+                  </DropdownMenuLabel>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
