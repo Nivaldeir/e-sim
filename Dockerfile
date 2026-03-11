@@ -1,22 +1,21 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
+# Enable corepack (pnpm) and prepare pnpm
+RUN corepack enable
 
-COPY package.json package-lock.json* ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN npx prisma generate
+RUN pnpm prisma generate
 
-RUN npx prisma migrate deploy
-
-RUN npm run build
+RUN pnpm run build
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# DATABASE_URL must be set at runtime (docker run -e DATABASE_URL=... or --env-file)
+CMD ["pnpm", "start"]
