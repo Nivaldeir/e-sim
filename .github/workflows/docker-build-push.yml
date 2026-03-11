@@ -18,6 +18,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug secrets presence
+        run: |
+          echo "Has username: ${{ secrets.DOCKERHUB_USERNAME != '' }}"
+          echo "Has token: ${{ secrets.DOCKERHUB_TOKEN != '' }}"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
