@@ -13,8 +13,10 @@ RUN pnpm install --frozen-lockfile || pnpm install
 
 COPY . .
 
+RUN pnpm prisma generate
+
 RUN pnpm run build
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "pnpm prisma generate && pnpm start"]
+CMD ["pnpm", "start"]
