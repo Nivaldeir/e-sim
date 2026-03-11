@@ -167,8 +167,8 @@ export function EstablishmentModal({
               <FormItem>
                 <FormLabel>Empresa</FormLabel>
                 <FormControl>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger size="default">
+                  <Select value={field.value}  onValueChange={field.onChange}>
+                    <SelectTrigger size="default" className="w-full">
                       <SelectValue placeholder="Selecione a empresa" />
                     </SelectTrigger>
                     <SelectContent>
@@ -311,7 +311,7 @@ export function EstablishmentModal({
                 <FormLabel>Status</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger size="default">
+                    <SelectTrigger size="default" className="w-full">
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>
                     <SelectContent>

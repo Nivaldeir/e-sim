@@ -8,14 +8,18 @@ import { AccessModal } from "../_components/access-modal";
 import { AccessFormModal } from "../_components/access-form";
 import { api } from "@/src/shared/context/trpc-context";
 import { ColumnDef } from "@tanstack/react-table";
+import { useSelectedCompany } from "@/src/shared/context/company-context";
 
 export function useAccessesPage() {
   const { openModal } = useModal();
+  const { selectedCompanyId } = useSelectedCompany();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: users, isLoading, error, refetch } = api.access.listUsers.useQuery();
+  const { data: users, isLoading, error, refetch } = api.access.listUsers.useQuery({
+    companyId: selectedCompanyId || undefined,
+  });
   const { data: roles } = api.access.listRoles.useQuery();
-  
+
   const removeRoleMutation = api.access.removeRole.useMutation({
     onSuccess: () => {
       refetch();
@@ -25,7 +29,7 @@ export function useAccessesPage() {
   // Mapear dados para formato da tabela
   const tableData = useMemo(() => {
     if (!users) return [];
-    
+
     return users.map((user: any) => ({
       id: user.id,
       name: user.name || "Sem nome",

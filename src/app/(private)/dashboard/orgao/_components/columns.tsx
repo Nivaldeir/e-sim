@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge, Button } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
+import { Edit, FilePenLine } from "lucide-react";
 
 type OrganizationType = "FEDERAL" | "ESTADUAL" | "MUNICIPAL" | "OUTROS";
 
@@ -90,6 +91,24 @@ export function getOrgaoColumns(onEdit: (orgao: OrgaoTableData) => void): Column
             </Button>
           </div>
         );
+      },
+    },
+    {
+      accessorKey: "actions",
+      header: "Ações",
+      cell: ({ row }) => {
+        const orgao = row.original;
+        return <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(orgao)}
+            className="inline-flex h-8 w-8 items-center cursor-pointer justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-colors p-2 hover:bg-muted"
+          >
+            <Edit className="h-4 w-4 text-black" />
+          </Button>
+        </div>
       },
     },
   ];

@@ -23,7 +23,7 @@ interface ColorPickerProps {
 
 function ColorPicker({ label, value, onChange, description }: ColorPickerProps) {
   const isValidHex = (hex: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
-  
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -34,7 +34,7 @@ function ColorPicker({ label, value, onChange, description }: ColorPickerProps) 
       </div>
       <div className="flex items-center gap-2">
         <div
-          className="h-10 w-10 rounded-md border-2 border-border cursor-pointer shadow-sm"
+          className="h-10 w-10 rounded-md border-2 border-border cursor-pointer shadow-sm shrink-0"
           style={{ backgroundColor: isValidHex(value) ? value : "#000000" }}
         />
         <Input
@@ -53,21 +53,19 @@ function ColorPicker({ label, value, onChange, description }: ColorPickerProps) 
           type="color"
           value={isValidHex(value) ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
-          className="w-16 h-10 cursor-pointer"
+          className="w-16 h-10 cursor-pointer shrink-0"
         />
       </div>
     </div>
   );
 }
 
-
 export function ThemeCustomizer() {
-  const { colors, updateColor, resetColors, applyColors } =
-    useThemeColors();
+  const { colors, updateColor, resetColors, applyColors } = useThemeColors();
 
   useEffect(() => {
     applyColors(colors);
-  }, [colors, applyColors]);
+  }, [colors.primary, colors.primaryForeground, colors.secondary, colors.secondaryForeground, colors.accent, colors.accentForeground, colors.destructive, colors.destructiveForeground, applyColors, colors]);
 
   return (
     <Card>
@@ -75,7 +73,7 @@ export function ThemeCustomizer() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            <CardTitle>Personalização de Cores</CardTitle>
+            <CardTitle>Personalização de cores</CardTitle>
           </div>
           <Button
             variant="outline"
@@ -84,75 +82,72 @@ export function ThemeCustomizer() {
             className="gap-2"
           >
             <RotateCcw className="h-4 w-4" />
-            Restaurar Padrão
+            Restaurar padrão
           </Button>
         </div>
         <CardDescription>
-          Personalize as cores do sistema. As alterações são salvas
-          automaticamente no navegador.
+          Ajuste as cores do sistema. As alterações são aplicadas na hora em toda a interface e salvas no navegador.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground">
-              Cores Principais
+              Cores principais
             </h3>
             <ColorPicker
-              label="Cor Principal"
+              label="Cor principal"
               value={colors.primary}
               onChange={(value) => updateColor("primary", value)}
-              description="Cor principal do sistema"
+              description="Botões e elementos de destaque"
             />
             <ColorPicker
-              label="Cor do Texto sobre a Cor Principal"
+              label="Texto sobre a cor principal"
               value={colors.primaryForeground}
               onChange={(value) => updateColor("primaryForeground", value)}
-              description="Cor do texto sobre primary"
+              description="Texto em botões principais"
             />
             <ColorPicker
-              label="Cor Secundária"
+              label="Cor secundária"
               value={colors.secondary}
               onChange={(value) => updateColor("secondary", value)}
-              description="Cor secundária"
+              description="Fundos e elementos secundários"
             />
             <ColorPicker
-              label="Cor do Texto sobre a Cor Secundária"
+              label="Texto sobre a cor secundária"
               value={colors.secondaryForeground}
               onChange={(value) => updateColor("secondaryForeground", value)}
-              description="Cor do texto sobre secondary"
+              description="Texto em fundos secundários"
             />
           </div>
 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground">
-              Cores de Destaque
+              Cores de destaque e alerta
             </h3>
             <ColorPicker
-              label="Cor de Destaque"
+              label="Cor de destaque"
               value={colors.accent}
               onChange={(value) => updateColor("accent", value)}
-              description="Cor de destaque"
+              description="Hover e destaques"
             />
             <ColorPicker
-              label="Cor do Texto sobre a Cor de Destaque"
+              label="Texto sobre a cor de destaque"
               value={colors.accentForeground}
               onChange={(value) => updateColor("accentForeground", value)}
-              description="Cor do texto sobre accent"
+              description="Texto em áreas de destaque"
             />
             <ColorPicker
-              label="Cor de Destruição"
+              label="Cor destrutiva"
               value={colors.destructive}
               onChange={(value) => updateColor("destructive", value)}
-              description="Cor para ações destrutivas"
+              description="Excluir, cancelar e alertas"
             />
             <ColorPicker
-              label="Cor do Texto sobre a Cor de Destruição"
+              label="Texto sobre a cor destrutiva"
               value={colors.destructiveForeground}
-              onChange={(value) =>
-                updateColor("destructiveForeground", value)
-              }
-              description="Cor do texto sobre destructive"
+              onChange={(value) => updateColor("destructiveForeground", value)}
+              description="Texto em botões de exclusão"
             />
           </div>
         </div>
@@ -160,35 +155,38 @@ export function ThemeCustomizer() {
         <div className="pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <h4 className="text-sm font-medium mb-2">Visualização</h4>
+              <h4 className="text-sm font-medium mb-2">Prévia</h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                As cores abaixo são as mesmas usadas em botões e componentes em todo o sistema.
+              </p>
               <div className="flex flex-wrap gap-2">
-                <Button 
+                <Button
                   variant="default"
-                  style={{ 
+                  style={{
                     backgroundColor: colors.primary,
-                    color: colors.primaryForeground 
+                    color: colors.primaryForeground,
                   }}
                 >
-                  Cor Principal
+                  Principal
                 </Button>
-                <Button 
+                <Button
                   variant="secondary"
-                  style={{ 
+                  style={{
                     backgroundColor: colors.secondary,
-                    color: colors.secondaryForeground 
+                    color: colors.secondaryForeground,
                   }}
                 >
-                  Cor Secundária
+                  Secundário
                 </Button>
-                <Button variant="outline">Outline</Button>
-                <Button 
+                <Button variant="outline">Contorno</Button>
+                <Button
                   variant="destructive"
-                  style={{ 
+                  style={{
                     backgroundColor: colors.destructive,
-                    color: colors.destructiveForeground 
+                    color: colors.destructiveForeground,
                   }}
                 >
-                  Cor de Destruição
+                  Destrutivo
                 </Button>
               </div>
             </div>

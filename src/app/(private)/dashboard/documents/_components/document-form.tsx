@@ -22,32 +22,51 @@ import {
 import { Textarea } from "@/src/shared/components/global/ui/textarea";
 import { useZodForm } from "@/src/shared/hook/use-zod-form";
 import { ModalProps } from "@/src/shared/types/modal";
-import { FileText, Upload, X, Loader2, Plus } from "lucide-react";
+import { FileText, Upload, X, Loader2, Plus, Pencil } from "lucide-react";
 import { api } from "@/src/shared/context/trpc-context";
 import { DateRangePicker } from "@/src/shared/components/global/date-picker";
 import { useModal } from "@/src/shared/context/modal-context";
 import { CreateDocumentGroupModal } from "./create-document-group-modal";
+import { EditDocumentGroupModal } from "./edit-document-group-modal";
 import { useSelectedCompany } from "@/src/shared/context/company-context";
+import { toast } from "sonner";
 
 interface DocumentModalData {
   onSuccess: () => void;
   documentId?: string;
 }
 
-const documentSchema = z.object({
-  templateId: z.string().min(1, "Tipo de documento é obrigatório"),
-  organizationId: z.string().min(1, "Órgão é obrigatório"),
-  issueDate: z.string().optional(),
-  expirationDate: z.string().optional(),
-  alertDate: z.string().optional(),
-  responsibleId: z.string().min(1, "Responsável é obrigatório"),
-  chiefId: z.string().optional(),
-  companyId: z.string().min(1, "Empresa é obrigatória"),
-  establishmentId: z.string().min(1, "Estabelecimento é obrigatório"),
-  classification: z.string().optional(),
-  groupId: z.string().optional(),
-  observations: z.string().optional(),
-});
+const documentSchema = z
+  .object({
+    templateId: z.string().min(1, "Tipo de documento é obrigatório"),
+    organizationId: z.string().min(1, "Órgão é obrigatório"),
+    issueDate: z.string().optional(),
+    expirationDate: z.string().optional(),
+    alertDate: z.string().optional(),
+    responsibleId: z.string().min(1, "Responsável é obrigatório"),
+    chiefId: z.string().optional(),
+    companyId: z.string().min(1, "Empresa é obrigatória"),
+    establishmentId: z.string().min(1, "Estabelecimento é obrigatório"),
+    classification: z.string().optional(),
+    groupId: z.string().optional(),
+    observations: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      const issue = data.issueDate ? new Date(data.issueDate).getTime() : null;
+      const alert = data.alertDate ? new Date(data.alertDate).getTime() : null;
+      const exp = data.expirationDate ? new Date(data.expirationDate).getTime() : null;
+      if (alert == null) return true;
+      if (issue != null && alert < issue) return false;
+      if (exp != null && alert > exp) return false;
+      return true;
+    },
+    {
+      message:
+        "Data de aviso deve ser maior ou igual à data de expedição e menor ou igual à data de expiração.",
+      path: ["alertDate"],
+    }
+  );
 
 type DocumentFormValues = z.infer<typeof documentSchema>;
 
@@ -83,7 +102,7 @@ export function DocumentFormModal({
     pageSize: 100,
     companyId: selectedCompanyId || undefined,
   });
-  
+
   const { data: usersData, isLoading: usersLoading } = api.access.listUsers.useQuery({
     companyId: selectedCompanyId || undefined,
   });
@@ -326,7 +345,16 @@ export function DocumentFormModal({
         </div>
       ) : (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+              const msg =
+                errors.alertDate?.message ??
+                errors.root?.message ??
+                "Data de aviso deve ser maior ou igual à data de expedição e menor ou igual à data de expiração.";
+              toast.error(msg);
+            })}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -419,10 +447,10 @@ export function DocumentFormModal({
 
               <FormField
                 control={form.control}
-                name="expirationDate"
+                name="alertDate"
                 render={({ field }) => (
                   <FormItem className="flex-1 w-full">
-                    <FormLabel>Data de expiração</FormLabel>
+                    <FormLabel>Data de aviso</FormLabel>
                     <FormControl>
                       <DateRangePicker
                         value={field.value ? new Date(field.value) : undefined}
@@ -437,10 +465,10 @@ export function DocumentFormModal({
 
               <FormField
                 control={form.control}
-                name="alertDate"
+                name="expirationDate"
                 render={({ field }) => (
                   <FormItem className="flex-1 w-full">
-                    <FormLabel>Data de aviso</FormLabel>
+                    <FormLabel>Data de expiração</FormLabel>
                     <FormControl>
                       <DateRangePicker
                         value={field.value ? new Date(field.value) : undefined}
@@ -601,6 +629,9 @@ export function DocumentFormModal({
                 control={form.control}
                 name="groupId"
                 render={({ field }) => {
+                  const selectedGroup = field.value
+                    ? groups.find((g: { id: string; name: string; description?: string | null }) => g.id === field.value)
+                    : null;
                   return (
                     <FormItem className="flex-1 w-full">
                       <FormLabel>Grupo de Documentos</FormLabel>
@@ -630,7 +661,40 @@ export function DocumentFormModal({
                       >
                         <FormControl>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o grupo (opcional)" />
+                            <span className="flex flex-1 items-center truncate">
+                              <SelectValue placeholder="Selecione o grupo (opcional)" />
+                            </span>
+                            {selectedGroup && (
+                              <button
+                                type="button"
+                                title="Editar grupo"
+                                className="shrink-0 rounded p-1 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+                                onPointerDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  openModal(
+                                    "edit-document-group-" + field.value,
+                                    EditDocumentGroupModal,
+                                    {
+                                      groupId: selectedGroup.id,
+                                      initialName: selectedGroup.name,
+                                      initialDescription: selectedGroup.description ?? undefined,
+                                      onSuccess: () => refetchGroups(),
+                                    }
+                                  );
+                                }}
+                              >
+                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                              </button>
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

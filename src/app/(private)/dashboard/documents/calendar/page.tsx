@@ -34,6 +34,7 @@ export default function DocumentsCalendarPage() {
 
   const { data: documents, isLoading } = api.document.getExpiring.useQuery({
     days: 365,
+    pastDays: 365,
     companyId: selectedCompanyId ?? undefined,
   }, {
     enabled: !!selectedCompanyId,

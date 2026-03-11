@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge, Button } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
-import { FileText } from "lucide-react";
+import { FilePenLine, FileText } from "lucide-react";
 
 export type EstablishmentTableData = {
   id: string;
@@ -93,6 +93,19 @@ export function getEstablishmentColumns(onEdit: (establishment: EstablishmentTab
         <span className="text-sm font-medium text-center flex justify-center">
           {row.original.filesCount}
         </span>
+      );
+    },
+  },
+  {
+    accessorKey: "actions",
+    header: "Ações",
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="gap-1" onClick={() => onEdit(row.original)}>
+            <FilePenLine className="h-4 w-4" />
+          </Button>
+        </div>
       );
     },
   },

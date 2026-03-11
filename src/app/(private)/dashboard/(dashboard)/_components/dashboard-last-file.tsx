@@ -1,4 +1,17 @@
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/shared/components/global/ui";
+import { useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/src/shared/components/global/ui";
 import { Skeleton } from "@/src/shared/components/global/ui/skeleton";
 import { useSelectedCompany } from "@/src/shared/context/company-context";
 import { api } from "@/src/shared/context/trpc-context";
@@ -7,8 +20,16 @@ import Link from "next/link";
 
 export function DashboardLastFile() {
   const { selectedCompany } = useSelectedCompany();
+  const [establishmentModal, setEstablishmentModal] = useState<{ id: string; name: string } | null>(null);
+
   const { data: latestFiles, isLoading: filesLoading } = api.dashboard.getLatestDocuments.useQuery({ limit: 5, companyId: selectedCompany?.id ?? undefined });
   const { data: establishments, isLoading: establishmentsLoading } = api.dashboard.getEstablishmentsStats.useQuery({ companyId: selectedCompany?.id ?? undefined });
+
+  const { data: establishmentDocsData, isLoading: establishmentDocsLoading } = api.document.list.useQuery(
+    { page: 1, pageSize: 50, establishmentId: establishmentModal?.id ?? undefined },
+    { enabled: !!establishmentModal?.id }
+  );
+  const establishmentDocs = establishmentDocsData?.documents ?? [];
 
   return (
     <div className="grid gap-4 xl:grid-cols-3">
@@ -116,10 +137,12 @@ export function DashboardLastFile() {
           )}
 
           {!establishmentsLoading &&
-            establishments?.map((establishment: any) => (
-              <div
+            establishments?.map((establishment: { id: string; name: string; count: number }) => (
+              <button
+                type="button"
                 key={establishment.id}
-                className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 hover:bg-muted/40"
+                onClick={() => setEstablishmentModal({ id: establishment.id, name: establishment.name })}
+                className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg px-3 py-2 hover:bg-muted/40 text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
@@ -132,10 +155,68 @@ export function DashboardLastFile() {
                 <Badge variant="secondary">
                   {establishment.count}
                 </Badge>
-              </div>
+              </button>
             ))}
         </CardContent>
       </Card>
+
+      <Dialog open={!!establishmentModal} onOpenChange={(open) => !open && setEstablishmentModal(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="size-5" />
+              {establishmentModal?.name ?? "Estabelecimento"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Documentos deste estabelecimento
+            </p>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+            {establishmentDocsLoading &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between gap-4 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="size-8 rounded-lg" />
+                    <div className="flex flex-col gap-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            {!establishmentDocsLoading && establishmentDocs.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                Nenhum documento neste estabelecimento
+              </p>
+            )}
+            {!establishmentDocsLoading &&
+              establishmentDocs.map((doc: any) => (
+                <Link
+                  key={doc.id}
+                  href={`/document/${doc.id}`}
+                  target="_blank"
+                  className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2 hover:bg-muted/60 transition-colors"
+                  onClick={() => setEstablishmentModal(null)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                      <FileText className="size-4" />
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-sm font-medium truncate">
+                        {doc.template?.name ?? "Documento"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString("pt-BR") : ""}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+              ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

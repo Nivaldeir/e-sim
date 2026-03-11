@@ -221,9 +221,11 @@ export const dashboardRouter = router({
       ? {}
       : { responsibleId: userId, companyId: input.companyId };
 
-    // Buscar estabelecimentos com contagem de documentos
     const establishments = await ctx.prisma.establishment.findMany({
-      where: { status: "ACTIVE" },
+      where: {
+        status: "ACTIVE",
+        ...(input.companyId && { companyId: input.companyId }),
+      },
       include: {
         _count: {
           select: {
@@ -236,9 +238,10 @@ export const dashboardRouter = router({
     });
 
     return establishments.map((est) => ({
+      id: est.id,
       name: est.name,
       code: est.code || "",
-      files: est._count.documents,
+      count: est._count.documents,
     }));
   }),
 });

@@ -324,20 +324,28 @@ export const documentRouter = router({
     .input(
       z.object({
         days: z.number().default(30),
+        pastDays: z.number().optional(),
         companyId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       const today = new Date();
-      const futureDate = new Date();
-      futureDate.setDate(today.getDate() + input.days);
+      today.setHours(0, 0, 0, 0);
+      const futureDate = new Date(today);
+      futureDate.setDate(futureDate.getDate() + input.days);
+      futureDate.setHours(23, 59, 59, 999);
+
+      const startDate = new Date(today);
+      if (input.pastDays != null && input.pastDays > 0) {
+        startDate.setDate(startDate.getDate() - input.pastDays);
+      }
 
       const documents = await ctx.prisma.document.findMany({
         where: {
           status: "ACTIVE",
           ...(input.companyId && { companyId: input.companyId }),
           expirationDate: {
-            gte: today,
+            gte: startDate,
             lte: futureDate,
           },
         },

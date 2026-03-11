@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge, Button } from "@/src/shared/components/global/ui";
 import { DataTableColumnHeader } from "@/src/shared/components/global/datatable/data-table-column-header";
+import { Pencil } from "lucide-react";
 
 export type SocialReasonTableData = {
   id: string;
@@ -41,23 +42,36 @@ export function getSocialReasonColumns(onEdit: (reason: SocialReasonTableData) =
         const isActive = status === "active";
         return (
           <div className="flex justify-center">
+            <Badge
+              variant={isActive ? "default" : "secondary"}
+              className={
+                isActive
+                  ? "bg-emerald-500 hover:bg-emerald-600"
+                  : "bg-red-500 hover:bg-red-600 text-white"
+              }
+            >
+              {isActive ? "Ativo" : "Inativo"}
+            </Badge>
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: () => <span className="text-center w-full block">Ações</span>,
+      cell: ({ row }) => {
+        const reason = row.original;
+        return (
+          <div className="flex justify-center">
             <Button
               type="button"
               variant="ghost"
-              className="h-auto p-0 hover:bg-transparent"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => onEdit(reason)}
-              title="Abrir para edição"
+              title="Editar"
             >
-              <Badge
-                variant={isActive ? "default" : "secondary"}
-                className={
-                  isActive
-                    ? "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
-                    : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                }
-              >
-                {isActive ? "Ativo" : "Inativo"}
-              </Badge>
+              <Pencil className="h-4 w-4" />
             </Button>
           </div>
         );

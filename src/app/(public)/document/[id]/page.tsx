@@ -142,15 +142,6 @@ function AttachmentLink({
   );
 }
 
-function NoAttachmentsView() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-4 py-16 px-4 text-center">
-      <FileIcon className="h-14 w-14 text-muted-foreground" aria-hidden />
-      <p className="text-sm text-muted-foreground">Nenhum anexo disponível para este documento.</p>
-    </div>
-  );
-}
-
 // --- Main page ---
 export default function PublicDocumentPage() {
   const params = useParams();
@@ -193,7 +184,10 @@ export default function PublicDocumentPage() {
         <main className="flex-1 container max-w-2xl py-8">
           <Card>
             <CardContent className="py-12">
-              <NoAttachmentsView />
+              <div className="flex flex-col items-center justify-center gap-4 py-16 px-4 text-center">
+                <FileIcon className="h-14 w-14 text-muted-foreground" aria-hidden />
+                <p className="text-sm text-muted-foreground">Nenhum anexo disponível para este documento.</p>
+              </div>
             </CardContent>
           </Card>
         </main>

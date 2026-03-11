@@ -189,11 +189,11 @@ function LoginPageContent() {
             {/* File List */}
             <div className="p-6 space-y-3 bg-background">
               {[
-                { name: 'Projects', icon: Folder, color: 'text-blue-500', items: '24 files' },
-                { name: 'Reports-2024.pdf', icon: File, color: 'text-red-500', items: '2.4 MB' },
-                { name: 'Design Assets', icon: Folder, color: 'text-purple-500', items: '156 files' },
-                { name: 'Presentation.pptx', icon: File, color: 'text-orange-500', items: '8.1 MB' },
-                { name: 'Team Documents', icon: Folder, color: 'text-green-500', items: '89 files' },
+                { name: 'Projetos', icon: Folder, color: 'text-blue-500', items: '24 files' },
+                { name: 'Relatórios', icon: File, color: 'text-red-500', items: '2.4 MB' },
+                { name: 'Documentos', icon: Folder, color: 'text-purple-500', items: '156 files' },
+                { name: 'Apresentações', icon: File, color: 'text-orange-500', items: '8.1 MB' },
+                { name: 'Documentos', icon: Folder, color: 'text-green-500', items: '89 files' },
               ].map((item, i) => (
                 <div
                   key={i}

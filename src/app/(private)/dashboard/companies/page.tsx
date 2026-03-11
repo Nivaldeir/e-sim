@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/src/shared/components/global/ui";
 import { Input } from "@/src/shared/components/global/ui/input";
-import { Building2, Plus, Loader2, AlertCircle, Search } from "lucide-react";
+import { Building2, Plus, Loader2, AlertCircle, Search, FilePenLine } from "lucide-react";
 import { useModal } from "@/src/shared/context/modal-context";
 import { CompanyModal } from "./_components/company-form";
 import { api } from "@/src/shared/context/trpc-context";
@@ -186,16 +186,25 @@ export default function CompaniesPage() {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge
-                    variant={company.status === "ACTIVE" ? "default" : "secondary"}
-                    className={
-                      company.status === "ACTIVE"
-                        ? "bg-emerald-500 hover:bg-emerald-600"
-                        : "bg-red-500 hover:bg-red-600 text-white"
-                    }
-                  >
-                    {company.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => handleEditCompany(company)}>
+                        <FilePenLine className="h-4 w-4" />
+                        Editar
+                      </Button>
+                    </div>
+                    <Badge
+                      variant={company.status === "ACTIVE" ? "default" : "secondary"}
+                      className={
+                        company.status === "ACTIVE"
+                          ? "bg-emerald-500 hover:bg-emerald-600"
+                          : "bg-red-500 hover:bg-red-600 text-white"
+                      }
+                    >
+                      {company.status === "ACTIVE" ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </div>
+
                 </div>
               </CardHeader>
               <CardContent className="px-6 pt-0 pb-4 grid gap-4 md:grid-cols-3 text-sm">
