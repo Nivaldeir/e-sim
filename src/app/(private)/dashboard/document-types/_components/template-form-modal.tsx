@@ -40,6 +40,16 @@ const fieldTypeOptions = [
 ];
 
 type FieldType = "TEXT" | "NUMBER" | "DATE" | "EMAIL" | "CPF" | "CNPJ" | "PHONE" | "TEXTAREA" | "SELECT" | "FILE";
+type ValidationRule = "NONE" | "CPF" | "CNPJ" | "EMAIL" | "NUMBER" | "PHONE";
+
+const validationRuleOptions: Array<{ value: ValidationRule; label: string }> = [
+  { value: "NONE", label: "Sem validação específica" },
+  { value: "CPF", label: "Validar CPF" },
+  { value: "CNPJ", label: "Validar CNPJ" },
+  { value: "EMAIL", label: "Validar e-mail" },
+  { value: "NUMBER", label: "Validar número" },
+  { value: "PHONE", label: "Validar telefone" },
+];
 
 type Field = {
   id: string;
@@ -49,7 +59,55 @@ type Field = {
   required: boolean;
   order: number;
   options?: string[];
+  validationRule?: ValidationRule;
 };
+
+const FIELD_NAME_REGEX = /^[a-z][a-z0-9_]*$/;
+
+function normalizeFieldName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+function validateTemplateFields(fields: Field[]): string | null {
+  const names = new Set<string>();
+
+  for (const field of fields) {
+    const normalizedName = normalizeFieldName(field.name);
+    if (!normalizedName || !field.label.trim()) {
+      return "Todos os campos devem ter nome e label";
+    }
+
+    if (!FIELD_NAME_REGEX.test(normalizedName)) {
+      return "Nome do campo deve começar com letra e conter apenas letras minúsculas, números e underscore";
+    }
+
+    if (names.has(normalizedName)) {
+      return `Nome de campo duplicado: ${normalizedName}`;
+    }
+    names.add(normalizedName);
+
+    if (field.type === "SELECT") {
+      const options = (field.options || [])
+        .map((option) => option.trim())
+        .filter(Boolean);
+
+      if (options.length === 0) {
+        return "Campos do tipo SELECT devem ter pelo menos uma opção";
+      }
+
+      const uniqueOptions = new Set(options.map((option) => option.toLowerCase()));
+      if (uniqueOptions.size !== options.length) {
+        return `O campo ${normalizedName} possui opções duplicadas`;
+      }
+    }
+  }
+
+  return null;
+}
 
 const templateSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -71,6 +129,7 @@ type TemplateFormModalData = {
       required: boolean;
       order: number;
       options: string[];
+        validationRule?: ValidationRule | null;
     }>;
   };
   onSuccess?: () => void;
@@ -89,6 +148,7 @@ export function TemplateFormModal({
       required: f.required,
       order: f.order,
       options: f.options || [],
+      validationRule: f.validationRule || "NONE",
     })) || []
   );
 
@@ -122,6 +182,7 @@ export function TemplateFormModal({
       type: "TEXT",
       required: false,
       order: fields.length,
+      validationRule: "NONE",
     };
     setFields([...fields, newField]);
   };
@@ -142,29 +203,25 @@ export function TemplateFormModal({
       return;
     }
 
-    // Validar campos
-    for (const field of fields) {
-      if (!field.name || !field.label) {
-        form.setError("root", {
-          message: "Todos os campos devem ter nome e label",
-        });
-        return;
-      }
-      if (field.type === "SELECT" && (!field.options || field.options.length === 0)) {
-        form.setError("root", {
-          message: "Campos do tipo SELECT devem ter pelo menos uma opção",
-        });
-        return;
-      }
+    const fieldsValidationError = validateTemplateFields(fields);
+    if (fieldsValidationError) {
+      form.setError("root", {
+        message: fieldsValidationError,
+      });
+      return;
     }
 
     const fieldsData = fields.map((field, index) => ({
-      name: field.name,
-      label: field.label,
+      name: normalizeFieldName(field.name),
+      label: field.label.trim(),
       type: field.type as FieldType,
       required: field.required,
+      validationRule: field.validationRule === "NONE" ? undefined : field.validationRule,
       order: index,
-      options: field.type === "SELECT" ? field.options || [] : undefined,
+      options:
+        field.type === "SELECT"
+          ? (field.options || []).map((option) => option.trim()).filter(Boolean)
+          : undefined,
     }));
 
     if (data?.template) {
@@ -326,6 +383,29 @@ export function TemplateFormModal({
                           }
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">
+                        Função de validação
+                      </label>
+                      <Select
+                        value={field.validationRule || "NONE"}
+                        onValueChange={(value) =>
+                          updateField(field.id, { validationRule: value as ValidationRule })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {validationRuleOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">

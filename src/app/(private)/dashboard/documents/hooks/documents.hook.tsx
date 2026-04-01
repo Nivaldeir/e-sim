@@ -38,8 +38,15 @@ export function useDocumentsPage() {
     alertDate: doc.alertDate?.toISOString() || "",
     observations: doc.observations || undefined,
     customData: doc.customData,
-    groupId: doc.group?.id || undefined,
-    groupName: doc.group?.name || undefined,
+    groups: (doc.groups?.length
+      ? doc.groups
+      : doc.group
+        ? [doc.group]
+        : []
+    ).map((group: { id: string; name: string }) => ({
+      id: group.id,
+      name: group.name,
+    })),
     attachments: (doc.attachments || []).map((a: any) => ({
       name: a.fileName,
       size: a.fileSize || 0,

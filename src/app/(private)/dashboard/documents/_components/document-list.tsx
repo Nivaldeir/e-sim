@@ -46,8 +46,10 @@ export type SavedDocument = {
     type: string;
     filePath?: string;
   }>;
-  groupId?: string;
-  groupName?: string;
+  groups?: Array<{
+    id: string;
+    name: string;
+  }>;
   createdAt: string;
 };
 
@@ -96,14 +98,19 @@ export function DocumentList({ documents, groupBy = "none", onEditDocument }: Do
     const ungrouped: SavedDocument[] = [];
 
     documents.forEach((doc) => {
-      if (doc.groupId && doc.groupName) {
-        if (!grouped[doc.groupId]) {
-          grouped[doc.groupId] = [];
-        }
-        grouped[doc.groupId].push(doc);
-      } else {
-        ungrouped.push(doc);
+      if (doc.groups && doc.groups.length > 0) {
+        doc.groups.forEach((group) => {
+          if (!grouped[group.id]) {
+            grouped[group.id] = [];
+          }
+          grouped[group.id].push({
+            ...doc,
+            groups: [group],
+          });
+        });
+        return;
       }
+      ungrouped.push(doc);
     });
 
     return { grouped, ungrouped };
@@ -428,7 +435,7 @@ export function DocumentList({ documents, groupBy = "none", onEditDocument }: Do
       {groupBy === "group" ? (
         <div className="grid gap-6">
           {Object.entries(groupedDocuments.grouped).map(([groupId, groupDocs]) => {
-            const groupName = groupDocs[0]?.groupName || "Sem nome";
+            const groupName = groupDocs[0]?.groups?.[0]?.name || "Sem nome";
             return (
               <div key={groupId} className="space-y-4">
                 <Card className="border-2">

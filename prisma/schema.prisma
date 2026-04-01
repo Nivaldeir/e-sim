@@ -171,7 +171,8 @@ model DocumentGroup {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  documents Document[]
+  documents       Document[] @relation("DocumentGroups")
+  legacyDocuments Document[] @relation("LegacyDocumentGroup")
 
   @@index([name])
   @@map("document_groups")
@@ -305,6 +306,7 @@ model DocumentTemplateField {
   type       FieldType
   required   Boolean   @default(false)
   order      Int       @default(0)
+  validationRule String? @map("validation_rule")
 
   // Posicionamento visual no documento
   positionX Float? @map("position_x")
@@ -381,7 +383,8 @@ model Document {
   establishment Establishment        @relation(fields: [establishmentId], references: [id], onDelete: Restrict)
   responsible   User                 @relation("ResponsibleDocuments", fields: [responsibleId], references: [id])
   chief         User?                @relation("ChiefDocuments", fields: [chiefId], references: [id])
-  group         DocumentGroup?       @relation(fields: [groupId], references: [id])
+  group         DocumentGroup?       @relation("LegacyDocumentGroup", fields: [groupId], references: [id])
+  groups        DocumentGroup[]      @relation("DocumentGroups")
   attachments   DocumentAttachment[]
   files         File[]               @relation("DocumentFiles")
 

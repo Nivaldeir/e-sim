@@ -14,6 +14,7 @@ const createDocumentSchema = z.object({
   alertDate: z.string().optional(),
   classification: z.string().optional(),
   groupId: z.string().optional(),
+  groupIds: z.array(z.string()).optional(),
   customData: z.record(z.string(), z.any()).optional().nullable(),
   observations: z.string().optional().nullable(),
   status: z.enum(["ACTIVE", "EXPIRED", "PENDING", "CANCELLED"]).default("ACTIVE"),
@@ -104,6 +105,13 @@ export const documentRouter = router({
                 description: true,
               },
             },
+            groups: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
             attachments: {
               select: {
                 id: true,
@@ -152,6 +160,13 @@ export const documentRouter = router({
               email: true,
             },
           },
+          groups: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
           attachments: true,
         },
       });
@@ -193,6 +208,13 @@ export const documentRouter = router({
               email: true,
             },
           },
+          groups: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
           attachments: true,
         },
       });
@@ -207,11 +229,19 @@ export const documentRouter = router({
   create: protectedProcedure
     .input(createDocumentSchema)
     .mutation(async ({ ctx, input }) => {
-      const { expirationDate, alertDate, issueDate, ...data } = input;
+      const { expirationDate, alertDate, issueDate, groupId, groupIds, ...data } = input;
+      const normalizedGroupIds = groupIds ?? (groupId ? [groupId] : []);
+      const legacyGroupId = normalizedGroupIds[0];
 
       const document = await ctx.prisma.document.create({
         data: {
           ...data,
+          groupId: legacyGroupId,
+          groups: normalizedGroupIds.length
+            ? {
+                connect: normalizedGroupIds.map((id) => ({ id })),
+              }
+            : undefined,
           issueDate: issueDate ? new Date(issueDate) : null,
           expirationDate: expirationDate ? new Date(expirationDate) : null,
           alertDate: alertDate ? new Date(alertDate) : null,
@@ -236,6 +266,13 @@ export const documentRouter = router({
               email: true,
             },
           },
+          groups: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
         },
       });
 
@@ -256,7 +293,20 @@ export const documentRouter = router({
       if (data.responsibleId !== undefined) updateData.responsibleId = data.responsibleId;
       if (data.chiefId !== undefined) updateData.chiefId = data.chiefId;
       if (data.classification !== undefined) updateData.classification = data.classification;
-      if (data.groupId !== undefined) updateData.groupId = data.groupId;
+      if (data.groupId !== undefined) {
+        updateData.groupId = data.groupId;
+        if (data.groupIds === undefined) {
+          updateData.groups = {
+            set: data.groupId ? [{ id: data.groupId }] : [],
+          };
+        }
+      }
+      if (data.groupIds !== undefined) {
+        updateData.groupId = data.groupIds[0] ?? null;
+        updateData.groups = {
+          set: data.groupIds.map((id) => ({ id })),
+        };
+      }
       if (data.observations !== undefined) updateData.observations = data.observations;
       if (data.status !== undefined) updateData.status = data.status;
       if (data.customData !== undefined) {
@@ -286,6 +336,13 @@ export const documentRouter = router({
               id: true,
               name: true,
               email: true,
+            },
+          },
+          groups: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
             },
           },
         },

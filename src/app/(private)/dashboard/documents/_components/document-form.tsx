@@ -30,6 +30,7 @@ import { CreateDocumentGroupModal } from "./create-document-group-modal";
 import { EditDocumentGroupModal } from "./edit-document-group-modal";
 import { useSelectedCompany } from "@/src/shared/context/company-context";
 import { toast } from "sonner";
+import { Document } from "@/src/shared/utils/document";
 
 interface DocumentModalData {
   onSuccess: () => void;
@@ -48,7 +49,7 @@ const documentSchema = z
     companyId: z.string().min(1, "Empresa é obrigatória"),
     establishmentId: z.string().min(1, "Estabelecimento é obrigatório"),
     classification: z.string().optional(),
-    groupId: z.string().optional(),
+    groupIds: z.array(z.string()).default([]),
     observations: z.string().optional(),
   })
   .refine(
@@ -70,6 +71,43 @@ const documentSchema = z
 
 type DocumentFormValues = z.infer<typeof documentSchema>;
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateDynamicFieldValue(field: any, rawValue: string): string | null {
+  const value = String(rawValue ?? "").trim();
+  if (!value) return field.required ? `${field.label} é obrigatório` : null;
+
+  const effectiveValidation = field.validationRule && field.validationRule !== "NONE"
+    ? field.validationRule
+    : field.type;
+
+  if (effectiveValidation === "CPF" && !Document.validateCPF(value)) {
+    return `${field.label} inválido`;
+  }
+
+  if (effectiveValidation === "CNPJ" && !Document.validateCNPJ(value) && !Document.validateCNPJAlphanumeric(value)) {
+    return `${field.label} inválido`;
+  }
+
+  if (effectiveValidation === "EMAIL" && !EMAIL_REGEX.test(value)) {
+    return `${field.label} inválido`;
+  }
+
+  if (effectiveValidation === "NUMBER" && Number.isNaN(Number(value))) {
+    return `${field.label} deve ser numérico`;
+  }
+
+  if (effectiveValidation === "PHONE" && value.replace(/\D/g, "").length < 10) {
+    return `${field.label} inválido`;
+  }
+
+  if (field.type === "SELECT" && field.options?.length && !field.options.includes(value)) {
+    return `${field.label} possui valor inválido`;
+  }
+
+  return null;
+}
+
 export function DocumentFormModal({
   onClose,
   data,
@@ -79,7 +117,6 @@ export function DocumentFormModal({
   const [isUploading, setIsUploading] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [customFieldsData, setCustomFieldsData] = useState<Record<string, string>>({});
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: templatesData, isLoading: templatesLoading } = api.documentTemplate.list.useQuery({
@@ -144,7 +181,7 @@ export function DocumentFormModal({
       companyId: "",
       establishmentId: "",
       classification: "",
-      groupId: "",
+      groupIds: [],
       observations: "",
     },
   });
@@ -167,7 +204,7 @@ export function DocumentFormModal({
       companyId: d.companyId ?? "",
       establishmentId: d.establishmentId ?? "",
       classification: d.classification ?? "",
-      groupId: d.groupId ?? "",
+      groupIds: d.groups?.map((group: { id: string }) => group.id) ?? (d.groupId ? [d.groupId] : []),
       observations: d.observations ?? "",
     });
     setSelectedTemplateId(d.templateId ?? "");
@@ -272,6 +309,16 @@ export function DocumentFormModal({
   };
 
   const handleSubmit = async (values: DocumentFormValues) => {
+    for (const field of templateFields) {
+      const fieldValue = customFieldsData[field.name];
+      const validationError = validateDynamicFieldValue(field, fieldValue);
+      if (validationError) {
+        form.setError("root", { message: validationError });
+        toast.error(validationError);
+        return;
+      }
+    }
+
     if (isEditing && data.documentId) {
       updateDocumentMutation.mutate({
         id: data.documentId,
@@ -285,7 +332,7 @@ export function DocumentFormModal({
         expirationDate: values.expirationDate || undefined,
         alertDate: values.alertDate || undefined,
         classification: values.classification || undefined,
-        groupId: values.groupId || undefined,
+        groupIds: values.groupIds.length ? values.groupIds : undefined,
         observations: values.observations || undefined,
         customData: Object.keys(customFieldsData).length > 0 ? customFieldsData : undefined,
       });
@@ -305,7 +352,7 @@ export function DocumentFormModal({
         expirationDate: values.expirationDate || undefined,
         alertDate: values.alertDate || undefined,
         classification: values.classification || undefined,
-        groupId: values.groupId || undefined,
+        groupIds: values.groupIds.length ? values.groupIds : undefined,
         observations: values.observations || undefined,
         customData: Object.keys(customFieldsData).length > 0 ? customFieldsData : undefined,
         status: "ACTIVE",
@@ -627,116 +674,132 @@ export function DocumentFormModal({
 
               <FormField
                 control={form.control}
-                name="groupId"
+                name="groupIds"
                 render={({ field }) => {
-                  const selectedGroup = field.value
-                    ? groups.find((g: { id: string; name: string; description?: string | null }) => g.id === field.value)
-                    : null;
+                  const selectedGroups = groups.filter((group: { id: string }) =>
+                    field.value?.includes(group.id)
+                  );
                   return (
                     <FormItem className="flex-1 w-full">
                       <FormLabel>Grupo de Documentos</FormLabel>
-                      <Select
-                        open={isSelectOpen}
-                        onOpenChange={setIsSelectOpen}
-                        onValueChange={(value) => {
-                          if (value === "__create_new__") {
-                            setIsSelectOpen(false);
-                            setTimeout(() => {
+                      <FormControl>
+                        <div className="space-y-2 rounded-md border p-3">
+                          <Select
+                            onValueChange={(value) => {
+                              if (value === "__create_new__") {
+                                openModal(
+                                  "create-document-group",
+                                  CreateDocumentGroupModal,
+                                  {
+                                    onSuccess: async (groupId) => {
+                                      await refetchGroups();
+                                      const current = field.value ?? [];
+                                      if (!current.includes(groupId)) {
+                                        field.onChange([...current, groupId]);
+                                      }
+                                    },
+                                  }
+                                );
+                                return;
+                              }
+                              const current = field.value ?? [];
+                              if (!current.includes(value)) {
+                                field.onChange([...current, value]);
+                              }
+                            }}
+                            value={undefined}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecione um grupo para adicionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {groups.map((group: any) => (
+                                <SelectItem key={group.id} value={group.id}>
+                                  {group.name}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="__create_new__">
+                                <div className="flex items-center gap-2">
+                                  <Plus className="h-4 w-4" />
+                                  Criar novo grupo
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedGroups.map((group: any) => (
+                              <div key={group.id} className="flex items-center gap-1 rounded-md border px-2 py-1">
+                                <span className="text-sm">{group.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  title="Editar grupo"
+                                  onClick={() => {
+                                    openModal(
+                                      "edit-document-group-" + group.id,
+                                      EditDocumentGroupModal,
+                                      {
+                                        groupId: group.id,
+                                        initialName: group.name,
+                                        initialDescription: group.description ?? undefined,
+                                        onSuccess: () => refetchGroups(),
+                                      }
+                                    );
+                                  }}
+                                >
+                                  <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  title="Remover grupo"
+                                  onClick={() =>
+                                    field.onChange((field.value ?? []).filter((id: string) => id !== group.id))
+                                  }
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
                               openModal(
                                 "create-document-group",
                                 CreateDocumentGroupModal,
                                 {
                                   onSuccess: async (groupId) => {
                                     await refetchGroups();
-                                    field.onChange(groupId);
+                                    const current = field.value ?? [];
+                                    if (!current.includes(groupId)) {
+                                      field.onChange([...current, groupId]);
+                                    }
                                   },
                                 }
-                              );
-                            }, 100);
-                            return;
-                          }
-                          field.onChange(value || undefined);
-                        }}
-                        value={field.value && field.value !== "__create_new__" ? field.value : undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <span className="flex flex-1 items-center truncate">
-                              <SelectValue placeholder="Selecione o grupo (opcional)" />
-                            </span>
-                            {selectedGroup && (
-                              <button
-                                type="button"
-                                title="Editar grupo"
-                                className="shrink-0 rounded p-1 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
-                                onPointerDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                }}
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                }}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  openModal(
-                                    "edit-document-group-" + field.value,
-                                    EditDocumentGroupModal,
-                                    {
-                                      groupId: selectedGroup.id,
-                                      initialName: selectedGroup.name,
-                                      initialDescription: selectedGroup.description ?? undefined,
-                                      onSuccess: () => refetchGroups(),
-                                    }
-                                  );
-                                }}
-                              >
-                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                              </button>
-                            )}
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {groups.length === 0 ? (
-                            <>
-                              <div className="p-2 text-sm text-muted-foreground text-center">
-                                Nenhum grupo disponível
-                              </div>
-                              <div className="border-t mt-1">
-                                <SelectItem
-                                  value="__create_new__"
-                                  className="text-primary font-medium"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    Criar novo grupo
-                                  </div>
-                                </SelectItem>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {groups.map((group: any) => (
-                                <SelectItem key={group.id} value={group.id}>
-                                  {group.name}
-                                </SelectItem>
-                              ))}
-                              <div className="border-t mt-1">
-                                <SelectItem
-                                  value="__create_new__"
-                                  className="text-primary font-medium"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    Criar novo grupo
-                                  </div>
-                                </SelectItem>
-                              </div>
-                            </>
+                              )
+                            }
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Criar novo grupo
+                          </Button>
+                          {groups.length === 0 && (
+                            <p className="text-sm text-muted-foreground">Nenhum grupo disponível</p>
                           )}
-                        </SelectContent>
-                      </Select>
+                          {selectedGroups.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {selectedGroups.length} grupo{selectedGroups.length > 1 ? "s" : ""} selecionado
+                              {selectedGroups.length > 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   );

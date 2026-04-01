@@ -19,6 +19,7 @@ const fieldSchema = z.object({
   label: z.string(),
   type: fieldTypeEnum,
   required: z.boolean(),
+  validationRule: z.enum(["NONE", "CPF", "CNPJ", "EMAIL", "NUMBER", "PHONE"]).optional(),
   order: z.number(),
   positionX: z.number().optional(),
   positionY: z.number().optional(),
