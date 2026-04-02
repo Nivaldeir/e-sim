@@ -51,16 +51,6 @@ const data = {
       icon: LayoutDashboard,
     },
     {
-      title: "Documentos",
-      url: "/dashboard/documents",
-      icon: FileText,
-    },
-    {
-      title: "Calendário de vencimentos",
-      url: "/dashboard/documents/calendar",
-      icon: CalendarDays,
-    },
-    {
       title: "Empresas",
       url: "/dashboard/companies",
       icon: Building2,
@@ -76,7 +66,7 @@ const data = {
       icon: Store,
     },
     {
-      title: "Tipos de documentos",
+      title: "Tipos de Documentos",
       url: "/dashboard/document-types",
       icon: FileText,
     },
@@ -89,6 +79,16 @@ const data = {
       title: "Acessos",
       url: "/dashboard/accesses",
       icon: KeyRound,
+    },
+    {
+      title: "Documentos",
+      url: "/dashboard/documents",
+      icon: FileText,
+    },
+    {
+      title: "Calendário de Vencimentos",
+      url: "/dashboard/documents/calendar",
+      icon: CalendarDays,
     },
     {
       title: "Configurações",
