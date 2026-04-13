@@ -6,6 +6,7 @@ import { Button } from "@/src/shared/components/global/ui/button";
 import { Input } from "@/src/shared/components/global/ui/input";
 import { Plus, Loader2, Search } from "lucide-react";
 import { TemplateCard } from "./_components/template-card";
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
 
 function DocumentTypesPageContent() {
   const {
@@ -16,6 +17,9 @@ function DocumentTypesPageContent() {
     handleOpenNewTemplate,
     handleEditTemplate,
     handleDeleteTemplate,
+    scope,
+    setScope,
+    selectedCompany,
   } = useDocumentTypesPage();
 
   return (
@@ -32,6 +36,12 @@ function DocumentTypesPageContent() {
           Novo
         </Button>
       </div>
+
+      <CompanyScopeToggle
+        value={scope}
+        onChange={setScope}
+        selectedCompanyName={selectedCompany?.name}
+      />
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

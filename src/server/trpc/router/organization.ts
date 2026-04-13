@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1).max(200),
@@ -35,6 +36,22 @@ export const organizationRouter = router({
       const { page, pageSize, search, type, status, companyId } = input;
       const skip = (page - 1) * pageSize;
 
+      let documentCompanyScope: Record<string, unknown> = {};
+      if (companyId) {
+        documentCompanyScope = { documents: { every: { companyId } } };
+      } else {
+        const ids = await getUserCompanyIds(ctx);
+        if (ids.length === 0) {
+          return {
+            organizations: [],
+            pagination: { page, pageSize, total: 0, totalPages: 0 },
+          };
+        }
+        documentCompanyScope = {
+          documents: { some: { companyId: { in: ids } } },
+        };
+      }
+
       const where = {
         ...(search && {
           OR: [
@@ -44,18 +61,12 @@ export const organizationRouter = router({
         }),
         ...(type && { type }),
         ...(status && { status }),
+        ...documentCompanyScope,
       };
 
       const [organizations, total] = await Promise.all([
         ctx.prisma.organization.findMany({
-          where: {
-            ...where,
-            documents: {
-              every: {
-                companyId: companyId,
-              }
-            }
-          },
+          where,
           skip,
           take: pageSize,
           orderBy: { createdAt: "desc" },

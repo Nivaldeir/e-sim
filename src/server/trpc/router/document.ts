@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
 const createDocumentSchema = z.object({
   templateId: z.string(),
@@ -42,13 +43,27 @@ export const documentRouter = router({
       const { page, pageSize, search, status, templateId, companyId, establishmentId, organizationId } = input;
       const skip = (page - 1) * pageSize;
 
+      let companyFilter: Prisma.DocumentWhereInput = {};
+      if (companyId) {
+        companyFilter = { companyId };
+      } else {
+        const ids = await getUserCompanyIds(ctx);
+        if (ids.length === 0) {
+          return {
+            documents: [],
+            pagination: { page, pageSize, total: 0, totalPages: 0 },
+          };
+        }
+        companyFilter = { companyId: { in: ids } };
+      }
+
       const where = {
         ...(search && {
           observations: { contains: search, mode: "insensitive" as const },
         }),
         ...(status && { status }),
         ...(templateId && { templateId }),
-        ...(companyId && { companyId }),
+        ...companyFilter,
         ...(establishmentId && { establishmentId }),
         ...(organizationId && { organizationId }),
       };
@@ -397,10 +412,21 @@ export const documentRouter = router({
         startDate.setDate(startDate.getDate() - input.pastDays);
       }
 
+      let companyWhere: Prisma.DocumentWhereInput = {};
+      if (input.companyId) {
+        companyWhere = { companyId: input.companyId };
+      } else {
+        const ids = await getUserCompanyIds(ctx);
+        if (ids.length === 0) {
+          return [];
+        }
+        companyWhere = { companyId: { in: ids } };
+      }
+
       const documents = await ctx.prisma.document.findMany({
         where: {
           status: "ACTIVE",
-          ...(input.companyId && { companyId: input.companyId }),
+          ...companyWhere,
           expirationDate: {
             gte: startDate,
             lte: futureDate,

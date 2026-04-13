@@ -8,16 +8,16 @@ import { AccessModal } from "../_components/access-modal";
 import { AccessFormModal } from "../_components/access-form";
 import { api } from "@/src/shared/context/trpc-context";
 import { ColumnDef } from "@tanstack/react-table";
-import { useSelectedCompany } from "@/src/shared/context/company-context";
+import { useCompanyScopeFilter } from "@/src/shared/hook/use-company-scope-filter";
 
 export function useAccessesPage() {
   const { openModal } = useModal();
-  const { selectedCompanyId } = useSelectedCompany();
+  const { scope, setScope, selectedCompany, companyIdForQuery } = useCompanyScopeFilter();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: users, isLoading, error, refetch } = api.access.listUsers.useQuery({
-    companyId: selectedCompanyId || undefined,
-  });
+  const { data: users, isLoading, error, refetch } = api.access.listUsers.useQuery(
+    companyIdForQuery ? { companyId: companyIdForQuery } : {}
+  );
   const { data: roles } = api.access.listRoles.useQuery();
 
   const removeRoleMutation = api.access.removeRole.useMutation({
@@ -132,6 +132,9 @@ export function useAccessesPage() {
     handleOpenNewAccess,
     handleEditAccess,
     handleDeleteAccess,
+    scope,
+    setScope,
+    selectedCompany,
   };
 }
 

@@ -5,9 +5,10 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from "@/src/shared/c
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Building2, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useOrgaoPage } from "./hooks/orgao.hook";
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
 
 function OrgaoPageContent() {
-  const { table, isLoading, error, refetch, handleOpenNewOrgao } = useOrgaoPage();
+  const { table, isLoading, error, refetch, handleOpenNewOrgao, scope, setScope, selectedCompany } = useOrgaoPage();
 
   if (isLoading) {
     return (
@@ -72,6 +73,12 @@ function OrgaoPageContent() {
           Novo
         </Button>
       </div>
+
+      <CompanyScopeToggle
+        value={scope}
+        onChange={setScope}
+        selectedCompanyName={selectedCompany?.name}
+      />
 
       <Card>
         <CardHeader className="px-6 pb-0">

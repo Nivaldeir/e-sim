@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
 const createEstablishmentSchema = z.object({
   companyId: z.string(),
@@ -36,6 +37,21 @@ export const establishmentRouter = router({
       const { page, pageSize, search, companyId, status } = input;
       const skip = (page - 1) * pageSize;
 
+      let companyFilter: { companyId: string } | { companyId: { in: string[] } } | Record<string, never> =
+        {};
+      if (companyId) {
+        companyFilter = { companyId };
+      } else {
+        const ids = await getUserCompanyIds(ctx);
+        if (ids.length === 0) {
+          return {
+            establishments: [],
+            pagination: { page, pageSize, total: 0, totalPages: 0 },
+          };
+        }
+        companyFilter = { companyId: { in: ids } };
+      }
+
       const where = {
         ...(search && {
           OR: [
@@ -43,7 +59,7 @@ export const establishmentRouter = router({
             { code: { contains: search, mode: "insensitive" as const } },
           ],
         }),
-        ...(companyId && { companyId }),
+        ...companyFilter,
         ...(status && { status }),
       };
 

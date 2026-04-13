@@ -3,20 +3,20 @@
 import { useMemo, useCallback, useState } from "react";
 import { useDataTable } from "@/src/shared/hook/use-data-table";
 import { useModal } from "@/src/shared/context/modal-context";
-import { useSelectedCompany } from "@/src/shared/context/company-context";
+import { useCompanyScopeFilter } from "@/src/shared/hook/use-company-scope-filter";
 import { EstablishmentModal } from "../_components/establishment-form";
 import { getEstablishmentColumns } from "../_components/columns";
 import { api } from "@/src/shared/context/trpc-context";
 
 export function useEstablishmentsPage() {
   const { openModal } = useModal();
-  const { selectedCompanyId } = useSelectedCompany();
+  const { scope, setScope, selectedCompany, companyIdForQuery } = useCompanyScopeFilter();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data, isLoading, error, refetch } = api.establishment.list.useQuery({
     page: 1,
     pageSize: 50,
-    companyId: selectedCompanyId || undefined,
+    ...(companyIdForQuery ? { companyId: companyIdForQuery } : {}),
   });
 
   const establishments = data?.establishments || [];
@@ -115,6 +115,9 @@ export function useEstablishmentsPage() {
     refetch,
     handleOpenNewEstablishment,
     handleEditEstablishment,
+    scope,
+    setScope,
+    selectedCompany,
   };
 }
 

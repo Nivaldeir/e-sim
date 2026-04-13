@@ -1,12 +1,15 @@
 import { Card } from "@/src/shared/components/global/ui/card";
-import { useSelectedCompany } from "@/src/shared/context/company-context";
 import { api } from "@/src/shared/context/trpc-context";
 import { FileText, Folder, Building2, StickyNote } from "lucide-react";
 
-export function DashboardHeader() {
-  const { selectedCompany } = useSelectedCompany();
+type DashboardHeaderProps = {
+  companyId?: string;
+};
 
-  const { data: stats, isLoading: statsLoading } = api.dashboard.getStats.useQuery({ companyId: selectedCompany?.id ?? undefined });
+export function DashboardHeader({ companyId }: DashboardHeaderProps) {
+  const { data: stats, isLoading: statsLoading } = api.dashboard.getStats.useQuery(
+    companyId ? { companyId } : {}
+  );
 
   const summaryCards = [
     {

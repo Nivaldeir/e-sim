@@ -7,18 +7,17 @@ import { useMemo, useCallback, useState } from "react";
 import { useDataTable } from "@/src/shared/hook/use-data-table";
 import { createColumns } from "../_components/columns";
 import { ColumnDef } from "@tanstack/react-table";
-import { useSelectedCompany } from "@/src/shared/context/company-context";
+import { useCompanyScopeFilter } from "@/src/shared/hook/use-company-scope-filter";
 
 export function useDocumentTypesPage() {
   const { openModal } = useModal();
-  const { selectedCompanyId } = useSelectedCompany();
+  const { scope, setScope, selectedCompany, companyIdForQuery } = useCompanyScopeFilter();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Buscar templates do banco
   const { data: templatesData, isLoading, refetch } = api.documentTemplate.list.useQuery({
     page: 1,
     pageSize: 100,
-    companyId: selectedCompanyId || undefined,
+    ...(companyIdForQuery ? { companyId: companyIdForQuery } : {}),
   });
 
   const deleteMutation = api.documentTemplate.delete.useMutation();
@@ -129,6 +128,9 @@ export function useDocumentTypesPage() {
     handleOpenNewTemplate,
     handleEditTemplate,
     handleDeleteTemplate,
+    scope,
+    setScope,
+    selectedCompany,
   };
 }
 

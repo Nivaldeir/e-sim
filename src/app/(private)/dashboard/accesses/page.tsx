@@ -6,6 +6,7 @@ import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Input } from "@/src/shared/components/global/ui/input";
 import { Shield, Plus, Loader2, AlertCircle, Search } from "lucide-react";
 import { useAccessesPage } from "./hooks/accesses.hook";
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
 
 const TIPOS_ACESSO_DESCRICOES: { nome: string; descricao: string }[] = [
   { nome: "ADMINISTRADOR", descricao: "Acesso total ao sistema" },
@@ -22,7 +23,10 @@ function AccessesPageContent() {
     refetch, 
     searchQuery,
     setSearchQuery,
-    handleOpenNewAccess, 
+    handleOpenNewAccess,
+    scope,
+    setScope,
+    selectedCompany,
   } = useAccessesPage();
 
   if (isLoading) {
@@ -88,6 +92,12 @@ function AccessesPageContent() {
           Novo
         </Button>
       </div>
+
+      <CompanyScopeToggle
+        value={scope}
+        onChange={setScope}
+        selectedCompanyName={selectedCompany?.name}
+      />
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

@@ -1,9 +1,39 @@
-import { protectedProcedure, router } from "../trpc";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import type { Context } from "../context";
+import { protectedProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
-// Helper para verificar permissões
 function hasPermission(userPermissions: string[], permission: string): boolean {
   return userPermissions.includes(permission) || userPermissions.includes("admin");
+}
+
+type ScopedCompanyFilters = {
+  document: Prisma.DocumentWhereInput;
+  establishment: Pick<Prisma.EstablishmentWhereInput, "companyId">;
+};
+
+async function resolveScopedCompanyFilters(
+  ctx: Context,
+  companyId?: string
+): Promise<ScopedCompanyFilters | null> {
+  if (companyId) {
+    return {
+      document: { companyId },
+      establishment: { companyId },
+    };
+  }
+  const ids = await getUserCompanyIds(ctx);
+  if (ids.length === 0) {
+    return null;
+  }
+  const establishment: Pick<Prisma.EstablishmentWhereInput, "companyId"> = {
+    companyId: { in: ids },
+  };
+  return {
+    document: { companyId: { in: ids } },
+    establishment,
+  };
 }
 
 export const dashboardRouter = router({
@@ -55,20 +85,29 @@ export const dashboardRouter = router({
     if (canReadDocuments) {
       const isAdmin = allPermissions.includes("admin") || user.userRoles.some((ur) => ur.role.name === "ADMINISTRADOR");
 
-      const documentWhere = isAdmin
-        ? {}
-        : { responsibleId: userId, companyId: input.companyId };
+      const scoped = await resolveScopedCompanyFilters(ctx, input.companyId);
+      if (!scoped) {
+        return stats;
+      }
+
+      const documentWhere: Prisma.DocumentWhereInput = {
+        ...scoped.document,
+        ...(!isAdmin ? { responsibleId: userId } : {}),
+      };
 
       stats.totalDocuments = await ctx.prisma.document.count({
         where: documentWhere,
       });
 
       stats.totalTemplates = await ctx.prisma.documentTemplate.count({
-        where: { isDefault: true },
+        where: { documents: { some: scoped.document } },
       });
 
       stats.totalEstablishments = await ctx.prisma.establishment.count({
-        where: { status: "ACTIVE" },
+        where: {
+          status: "ACTIVE",
+          ...scoped.establishment,
+        },
       });
 
       stats.totalNotes = await ctx.prisma.document.count({
@@ -132,12 +171,18 @@ export const dashboardRouter = router({
 
       const isAdmin = allPermissions.includes("admin") || user.userRoles.some((ur) => ur.role.name === "ADMINISTRADOR");
 
-      const documentWhere = isAdmin
-        ? {}
-        : { responsibleId: userId, companyId: input.companyId };
+    const scoped = await resolveScopedCompanyFilters(ctx, input.companyId);
+    if (!scoped) {
+      return [];
+    }
 
-      const documents = await ctx.prisma.document.findMany({
-        where: documentWhere,
+    const documentWhere: Prisma.DocumentWhereInput = {
+      ...scoped.document,
+      ...(!isAdmin ? { responsibleId: userId } : {}),
+    };
+
+    const documents = await ctx.prisma.document.findMany({
+      where: documentWhere,
         take: input.limit,
         orderBy: { createdAt: "desc" },
         include: {
@@ -217,14 +262,20 @@ export const dashboardRouter = router({
 
     const isAdmin = allPermissions.includes("admin") || user.userRoles.some((ur) => ur.role.name === "ADMINISTRADOR");
 
-    const documentWhere = isAdmin
-      ? {}
-      : { responsibleId: userId, companyId: input.companyId };
+    const scoped = await resolveScopedCompanyFilters(ctx, input.companyId);
+    if (!scoped) {
+      return [];
+    }
+
+    const documentWhere: Prisma.DocumentWhereInput = {
+      ...scoped.document,
+      ...(!isAdmin ? { responsibleId: userId } : {}),
+    };
 
     const establishments = await ctx.prisma.establishment.findMany({
       where: {
         status: "ACTIVE",
-        ...(input.companyId && { companyId: input.companyId }),
+        ...scoped.establishment,
       },
       include: {
         _count: {

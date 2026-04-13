@@ -22,23 +22,26 @@ import { api } from "@/src/shared/context/trpc-context";
 import { getExpirationStatus } from "@/src/shared/utils/document-expiration";
 import Link from "next/link";
 import { CalendarCellStatus, getMonthMetadata, getStatusClasses, STATUS_PRIORITY } from "./utils/calender.utils";
-import { useSelectedCompany } from "@/src/shared/context/company-context";
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
+import { useCompanyScopeFilter } from "@/src/shared/hook/use-company-scope-filter";
 
 export default function DocumentsCalendarPage() {
-  const { selectedCompanyId } = useSelectedCompany();
+  const { scope, setScope, selectedCompany, companyIdForQuery } = useCompanyScopeFilter();
   const [currentMonth, setCurrentMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
-  const { data: documents, isLoading } = api.document.getExpiring.useQuery({
-    days: 365,
-    pastDays: 365,
-    companyId: selectedCompanyId ?? undefined,
-  }, {
-    enabled: !!selectedCompanyId,
-  });
+  const expiringInput = useMemo(() => {
+    const base = { days: 365, pastDays: 365 };
+    if (scope === "selected" && companyIdForQuery) {
+      return { ...base, companyId: companyIdForQuery };
+    }
+    return base;
+  }, [scope, companyIdForQuery]);
+
+  const { data: documents, isLoading } = api.document.getExpiring.useQuery(expiringInput);
 
   const documentsByDate = useMemo(() => {
     const map: Record<string, any[]> = {};
@@ -170,7 +173,22 @@ export default function DocumentsCalendarPage() {
             <p className="text-sm text-muted-foreground">
               Visualize os documentos por data de vencimento, com cores por
               criticidade.
+              {scope === "selected" && selectedCompany?.name && (
+                <> Escopo: <strong className="text-foreground">{selectedCompany.name}</strong>.</>
+              )}
+              {scope === "my_companies" && (
+                <> Escopo: <strong className="text-foreground">todas as empresas em que você está vinculado</strong>.</>
+              )}
             </p>
+            <CompanyScopeToggle
+              className="mt-2 print:hidden"
+              value={scope}
+              onChange={(v) => {
+                setSelectedDateKey(null);
+                setScope(v);
+              }}
+              selectedCompanyName={selectedCompany?.name}
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -1,26 +1,36 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/shared/components/global/ui"
-import { useSelectedCompany } from "@/src/shared/context/company-context"
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
+import { useCompanyScopeFilter } from "@/src/shared/hook/use-company-scope-filter";
 import { DashboardHeader } from "./_components/dashboard-header";
 import { DashboardLastFile } from "./_components/dashboard-last-file";
 
 export default function DashboardPage() {
-  const { selectedCompany } = useSelectedCompany();
+  const { scope, setScope, companyIdForQuery, selectedCompany } = useCompanyScopeFilter();
 
-  const companyName = selectedCompany?.name ?? "Empresa";
+  const companyName =
+    scope === "selected" && selectedCompany?.name
+      ? selectedCompany.name
+      : "Minhas empresas";
 
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-lg border bg-card px-4 py-3">
-        <p className="text-sm font-medium text-muted-foreground">Nome da empresa</p>
+        <p className="text-sm font-medium text-muted-foreground">Escopo da visão</p>
         <p className="text-lg font-semibold">{companyName}</p>
         <p className="text-sm font-semibold text-emerald-600 mt-1">Controle de Documentos</p>
+        <CompanyScopeToggle
+          className="mt-3"
+          value={scope}
+          onChange={setScope}
+          selectedCompanyName={selectedCompany?.name}
+        />
       </div>
 
-      <DashboardHeader />
+      <DashboardHeader companyId={companyIdForQuery} />
 
-      <DashboardLastFile />
+      <DashboardLastFile companyId={companyIdForQuery} />
 
       <Card>
         <CardHeader className="px-6 pb-0">

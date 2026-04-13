@@ -13,20 +13,33 @@ import {
   DialogTitle,
 } from "@/src/shared/components/global/ui";
 import { Skeleton } from "@/src/shared/components/global/ui/skeleton";
-import { useSelectedCompany } from "@/src/shared/context/company-context";
 import { api } from "@/src/shared/context/trpc-context";
 import { Building2, ChevronRight, FileSpreadsheet, FileText } from "lucide-react";
 import Link from "next/link";
 
-export function DashboardLastFile() {
-  const { selectedCompany } = useSelectedCompany();
+type DashboardLastFileProps = {
+  companyId?: string;
+};
+
+export function DashboardLastFile({ companyId }: DashboardLastFileProps) {
   const [establishmentModal, setEstablishmentModal] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: latestFiles, isLoading: filesLoading } = api.dashboard.getLatestDocuments.useQuery({ limit: 5, companyId: selectedCompany?.id ?? undefined });
-  const { data: establishments, isLoading: establishmentsLoading } = api.dashboard.getEstablishmentsStats.useQuery({ companyId: selectedCompany?.id ?? undefined });
+  const listOpts = companyId ? { companyId } : {};
+  const { data: latestFiles, isLoading: filesLoading } = api.dashboard.getLatestDocuments.useQuery({
+    limit: 5,
+    ...listOpts,
+  });
+
+  const { data: establishments, isLoading: establishmentsLoading } =
+    api.dashboard.getEstablishmentsStats.useQuery(listOpts);
 
   const { data: establishmentDocsData, isLoading: establishmentDocsLoading } = api.document.list.useQuery(
-    { page: 1, pageSize: 50, establishmentId: establishmentModal?.id ?? undefined },
+    {
+      page: 1,
+      pageSize: 50,
+      establishmentId: establishmentModal?.id ?? undefined,
+      ...listOpts,
+    },
     { enabled: !!establishmentModal?.id }
   );
   const establishmentDocs = establishmentDocsData?.documents ?? [];
@@ -83,9 +96,6 @@ export function DashboardLastFile() {
                 title="Abrir documento"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-700">
-                    {file.id.slice(0, 2)}
-                  </div>
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium leading-tight">
                       {file.name}

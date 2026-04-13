@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure, createPermissionMiddleware } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 import {
   assignRoleInput,
   createRoleInput,
@@ -18,10 +19,20 @@ export const accessRouter = router({
     companyId: z.string().optional(),
   })).query(async ({ ctx, input }) => {
     const { companyId } = input;
+    let userCompanyFilter: Record<string, unknown> = {};
+    if (companyId) {
+      userCompanyFilter = { userCompanies: { some: { companyId } } };
+    } else {
+      const ids = await getUserCompanyIds(ctx);
+      if (ids.length === 0) {
+        return [];
+      }
+      userCompanyFilter = {
+        userCompanies: { some: { companyId: { in: ids } } },
+      };
+    }
     const users = await ctx.prisma.user.findMany({
-      where: {
-        ...(companyId && { userCompanies: { some: { companyId } } }),
-      },
+      where: userCompanyFilter,
       select: {
         id: true,
         name: true,

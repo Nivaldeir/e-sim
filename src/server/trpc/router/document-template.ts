@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
 const fieldTypeEnum = z.enum([
   "TEXT",
@@ -53,6 +54,22 @@ export const documentTemplateRouter = router({
       const { page, pageSize, search, isDefault, companyId } = input;
       const skip = (page - 1) * pageSize;
 
+      let documentCompanyScope: Record<string, unknown> = {};
+      if (companyId) {
+        documentCompanyScope = { documents: { every: { companyId } } };
+      } else {
+        const ids = await getUserCompanyIds(ctx);
+        if (ids.length === 0) {
+          return {
+            templates: [],
+            pagination: { page, pageSize, total: 0, totalPages: 0 },
+          };
+        }
+        documentCompanyScope = {
+          documents: { some: { companyId: { in: ids } } },
+        };
+      }
+
       const where = {
         ...(search && {
           OR: [
@@ -61,18 +78,12 @@ export const documentTemplateRouter = router({
           ],
         }),
         ...(isDefault !== undefined && { isDefault }),
+        ...documentCompanyScope,
       };
 
       const [templates, total] = await Promise.all([
         ctx.prisma.documentTemplate.findMany({
-          where: {
-            ...where,
-            documents: {
-              every: {
-                companyId: companyId,
-              }
-            }
-          },
+          where,
           skip,
           take: pageSize,
           orderBy: { createdAt: "desc" },

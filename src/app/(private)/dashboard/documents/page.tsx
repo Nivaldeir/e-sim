@@ -20,6 +20,7 @@ import {
 import { DocumentList } from "./_components/document-list";
 import { DocumentExportButton } from "./_components/document-export-button";
 import { useDocumentsPage } from "./hooks/documents.hook";
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
 
 export default function DocumentsPage() {
   const {
@@ -29,6 +30,9 @@ export default function DocumentsPage() {
     searchQuery,
     setSearchQuery,
     isLoading: documentsLoading,
+    scope,
+    setScope,
+    selectedCompany,
   } = useDocumentsPage();
   const [viewMode, setViewMode] = useState<"none" | "group">("none");
 
@@ -74,6 +78,12 @@ export default function DocumentsPage() {
             <FileText className="h-5 w-5" />
           </div>
           <h1 className="text-2xl font-semibold">Documentos</h1>
+          <CompanyScopeToggle
+            className="mt-2"
+            value={scope}
+            onChange={setScope}
+            selectedCompanyName={selectedCompany?.name}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative max-w-[220px]">

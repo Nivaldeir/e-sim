@@ -566,14 +566,14 @@ export function DocumentFormModal({
                 name="chiefId"
                 render={({ field }) => (
                   <FormItem className="flex-1 w-full">
-                    <FormLabel>Chefe</FormLabel>
+                    <FormLabel>Supervisor</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(value || undefined)}
                       value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione o chefe (opcional)" />
+                          <SelectValue placeholder="Seleciono o supervisor (opcional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

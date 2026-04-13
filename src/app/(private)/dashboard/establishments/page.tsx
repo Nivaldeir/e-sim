@@ -6,9 +6,23 @@ import { Input } from "@/src/shared/components/global/ui/input";
 import { DataTable } from "@/src/shared/components/global/datatable/data-table";
 import { Building2, FileText, Folder, Plus, Loader2, AlertCircle, Search, Printer } from "lucide-react";
 import { useEstablishmentsPage } from "./hooks/establishments.hook";
+import { CompanyScopeToggle } from "@/src/shared/components/global/company-scope-toggle";
 
 function EstablishmentsPageContent() {
-  const { establishments, table, isLoading, error, refetch, searchQuery, setSearchQuery, handleOpenNewEstablishment, handleEditEstablishment } = useEstablishmentsPage();
+  const {
+    establishments,
+    table,
+    isLoading,
+    error,
+    refetch,
+    searchQuery,
+    setSearchQuery,
+    handleOpenNewEstablishment,
+    handleEditEstablishment,
+    scope,
+    setScope,
+    selectedCompany,
+  } = useEstablishmentsPage();
 
   if (isLoading) {
     return (
@@ -71,6 +85,12 @@ function EstablishmentsPageContent() {
           Novo
         </Button>
       </div>
+
+      <CompanyScopeToggle
+        value={scope}
+        onChange={setScope}
+        selectedCompanyName={selectedCompany?.name}
+      />
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
