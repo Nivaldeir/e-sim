@@ -37,19 +37,25 @@ export const establishmentRouter = router({
       const { page, pageSize, search, companyId, status } = input;
       const skip = (page - 1) * pageSize;
 
-      let companyFilter: { companyId: string } | { companyId: { in: string[] } } | Record<string, never> =
-        {};
+      const userCompanyIds = await getUserCompanyIds(ctx);
+      if (userCompanyIds.length === 0) {
+        return {
+          establishments: [],
+          pagination: { page, pageSize, total: 0, totalPages: 0 },
+        };
+      }
+
+      let companyFilter: { companyId: string } | { companyId: { in: string[] } };
       if (companyId) {
-        companyFilter = { companyId };
-      } else {
-        const ids = await getUserCompanyIds(ctx);
-        if (ids.length === 0) {
+        if (!userCompanyIds.includes(companyId)) {
           return {
             establishments: [],
             pagination: { page, pageSize, total: 0, totalPages: 0 },
           };
         }
-        companyFilter = { companyId: { in: ids } };
+        companyFilter = { companyId };
+      } else {
+        companyFilter = { companyId: { in: userCompanyIds } };
       }
 
       const where = {
@@ -100,8 +106,13 @@ export const establishmentRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const establishment = await ctx.prisma.establishment.findUnique({
-        where: { id: input.id },
+      const userCompanyIds = await getUserCompanyIds(ctx);
+
+      const establishment = await ctx.prisma.establishment.findFirst({
+        where: {
+          id: input.id,
+          companyId: { in: userCompanyIds },
+        },
         include: {
           company: true,
           documents: {

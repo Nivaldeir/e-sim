@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
 const createCompanySchema = z.object({
   name: z.string().min(1).max(120),
@@ -29,7 +30,22 @@ export const companyRouter = router({
       const { page, pageSize, search, status, companyId } = input;
       const skip = (page - 1) * pageSize;
 
+      const userCompanyIds = await getUserCompanyIds(ctx);
+      if (userCompanyIds.length === 0) {
+        return {
+          companies: [],
+          pagination: { page, pageSize, total: 0, totalPages: 0 },
+        };
+      }
+
+      const idFilter = companyId
+        ? userCompanyIds.includes(companyId)
+          ? { id: companyId }
+          : { id: "" }
+        : { id: { in: userCompanyIds } };
+
       const where = {
+        ...idFilter,
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" as const } },
@@ -37,7 +53,6 @@ export const companyRouter = router({
           ],
         }),
         ...(status && { status }),
-        ...(companyId && { id: companyId }),
       };
 
       const [companies, total] = await Promise.all([
@@ -77,6 +92,11 @@ export const companyRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
+      const userCompanyIds = await getUserCompanyIds(ctx);
+      if (!userCompanyIds.includes(input.id)) {
+        throw new Error("Empresa não encontrada");
+      }
+
       const company = await ctx.prisma.company.findUnique({
         where: { id: input.id },
         include: {
