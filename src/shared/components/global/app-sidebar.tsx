@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { usePathname } from "next/navigation"
+import { useEffect } from "react"
 
 import { NavMain } from "@/src/shared/components/global/nav-main"
 import {
@@ -20,7 +20,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/src/shared/components/global/ui/dropdown-menu"
-import { useModal } from "@/src/shared/context/modal-context"
 import Link from "next/link"
 import {
   LifeBuoy,
@@ -117,6 +116,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     pageSize: 10,
   });
   const companies = companiesData?.companies ?? [];
+
+  // Clear selected company from localStorage if it's not accessible to the current user
+  useEffect(() => {
+    if (companiesData && selectedCompany) {
+      const isValid = companies.some((c: { id: string }) => c.id === selectedCompany.id);
+      if (!isValid) {
+        setSelectedCompany(null);
+      }
+    }
+  }, [companiesData, selectedCompany, setSelectedCompany, companies]);
+
   const displayName = selectedCompany?.name ?? companies[0]?.name ?? "Workspace";
 
   return (
