@@ -118,9 +118,29 @@ export const companyRouter = router({
   create: protectedProcedure
     .input(createCompanySchema)
     .mutation(async ({ ctx, input }) => {
+      const userId = (ctx.session?.user as { id?: string } | undefined)?.id;
+      if (!userId) throw new Error("Usuário não autenticado");
+
       const company = await ctx.prisma.company.create({
         data: input,
       });
+
+      // Associate the creator with the company
+      await ctx.prisma.userCompany.create({
+        data: { userId, companyId: company.id },
+      });
+
+      // Assign ADMINISTRADOR role to the creator if not already assigned
+      const adminRole = await ctx.prisma.role.findUnique({
+        where: { name: "ADMINISTRADOR" },
+      });
+      if (adminRole) {
+        await ctx.prisma.userRole.upsert({
+          where: { userId_roleId: { userId, roleId: adminRole.id } },
+          create: { userId, roleId: adminRole.id },
+          update: {},
+        });
+      }
 
       return company;
     }),

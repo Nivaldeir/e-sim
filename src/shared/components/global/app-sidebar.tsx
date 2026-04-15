@@ -3,6 +3,8 @@
 import type React from "react"
 import { useEffect } from "react"
 
+import { CompanyModal } from "@/src/app/(private)/dashboard/companies/_components/company-form"
+import { useModal } from "@/src/shared/context/modal-context"
 import { NavMain } from "@/src/shared/components/global/nav-main"
 import {
   Sidebar,
@@ -111,11 +113,26 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { selectedCompany, setSelectedCompany } = useSelectedCompany();
+  const { openModal } = useModal();
+  const utils = api.useUtils();
   const { data: companiesData } = api.company.list.useQuery({
     page: 1,
     pageSize: 10,
   });
   const companies = companiesData?.companies ?? [];
+
+  const handleCreateCompany = () => {
+    openModal(
+      "create-company-sidebar",
+      CompanyModal,
+      {
+        onSuccess: () => {
+          utils.company.list.invalidate();
+        },
+      },
+      { size: "md" }
+    );
+  };
 
   // Clear selected company from localStorage if it's not accessible to the current user
   useEffect(() => {
@@ -162,10 +179,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
                   <span>Empresas</span>
-                  <Button variant="outline" size="icon" className="w-6 h-6 rounded-sm cursor-pointer" asChild>
-                    <Link href="/dashboard/companies">
-                      <PlusIcon className="size-3.5" />
-                    </Link>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-6 h-6 rounded-sm cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); handleCreateCompany(); }}
+                  >
+                    <PlusIcon className="size-3.5" />
                   </Button>
                 </DropdownMenuLabel>
                 {companies.length > 0 ? (
