@@ -44,6 +44,10 @@ export const routePermissions: Record<string, RouteConfig> = {
     path: "/dashboard/files",
     permission: "files:read",
   },
+  "/dashboard/admin": {
+    path: "/dashboard/admin",
+    role: "SUPERADMIN",
+  },
 };
 
 export function getRouteConfig(pathname: string): RouteConfig | null {

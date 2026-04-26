@@ -11,6 +11,7 @@ import { dashboardRouter } from "./dashboard";
 import { socialReasonRouter } from "./social-reason";
 import { folderRouter } from "./folder";
 import { fileRouter } from "./file";
+import { adminRouter } from "./admin";
 
 export const appRouter = router({
   user: userRouter,
@@ -25,6 +26,7 @@ export const appRouter = router({
   socialReason: socialReasonRouter,
   folder: folderRouter,
   file: fileRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

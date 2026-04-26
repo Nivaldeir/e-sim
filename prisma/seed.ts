@@ -163,6 +163,34 @@ async function main() {
     });
   }
 
+  // 3b. Criar role SUPERADMIN
+  console.log('👑 Criando role SUPERADMIN...');
+  const superAdminRole = await prisma.role.upsert({
+    where: { name: 'SUPERADMIN' },
+    update: {},
+    create: {
+      name: 'SUPERADMIN',
+      description: 'Acesso total ao sistema — gerencia empresas e usuários',
+    },
+  });
+
+  const adminPermission = permissions.find((p) => p.name === 'admin');
+  if (adminPermission) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: superAdminRole.id,
+          permissionId: adminPermission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: superAdminRole.id,
+        permissionId: adminPermission.id,
+      },
+    });
+  }
+
   // 4. Criar usuário admin e associar role ADMINISTRADOR
   console.log('👤 Criando usuário admin...');
   
@@ -201,7 +229,22 @@ async function main() {
     },
   });
 
-  console.log(`✅ Usuário admin criado: ${adminUser.email} com role ADMINISTRADOR`);
+  // Associar role SUPERADMIN ao usuário admin
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: adminUser.id,
+        roleId: superAdminRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: adminUser.id,
+      roleId: superAdminRole.id,
+    },
+  });
+
+  console.log(`✅ Usuário admin criado: ${adminUser.email} com roles ADMINISTRADOR e SUPERADMIN`);
 
   // 5. Uma empresa e estabelecimento para o admin (evita aviso de "sem empresa")
   console.log('🏢 Criando empresa para o admin...');

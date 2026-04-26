@@ -38,11 +38,13 @@ import {
   PlusIcon,
   LayoutDashboard,
   Settings,
+  ShieldCheck,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "./ui/button"
 import { api } from "../../context/trpc-context"
 import { useSelectedCompany } from "@/src/shared/context/company-context"
+import { usePermissions } from "@/src/shared/hook/use-permissions"
 
 const data = {
   navMain: [
@@ -114,6 +116,8 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { selectedCompany, setSelectedCompany } = useSelectedCompany();
   const { openModal } = useModal();
+  const { hasRole, isAdmin } = usePermissions();
+  const isSuperAdmin = hasRole("SUPERADMIN");
   const utils = api.useUtils();
   const { data: companiesData } = api.company.list.useQuery({
     page: 1,
@@ -217,7 +221,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="flex flex-col items-center">
-        <NavMain items={data.navMain} />
+        <NavMain
+          items={[
+            ...data.navMain,
+            ...(isSuperAdmin
+              ? [{ title: "SuperAdmin", url: "/dashboard/admin", icon: ShieldCheck }]
+              : []),
+          ]}
+        />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

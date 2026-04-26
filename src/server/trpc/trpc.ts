@@ -74,6 +74,17 @@ const interceptMiddleware = t.middleware(async ({ next, path, type }) => {
 
 export const protectedProcedure = t.procedure.use(isAuthenticated).use(interceptMiddleware);
 
+export const superAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const sessionUser = ctx.session?.user as any;
+  const roles: string[] = sessionUser?.roles || [];
+  const permissions: string[] = sessionUser?.permissions || [];
+  const isSuperAdmin = roles.includes("SUPERADMIN") || permissions.includes("admin");
+  if (!isSuperAdmin) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito a SuperAdmins" });
+  }
+  return next({ ctx });
+});
+
 export function createPermissionMiddleware(requiredPermission: string) {
   return t.middleware(({ ctx, next }) => {
     if (!ctx.session) {
