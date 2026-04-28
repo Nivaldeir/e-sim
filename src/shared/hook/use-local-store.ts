@@ -23,14 +23,21 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       setStoredValue(valueToStore);
 
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        const serialized = JSON.stringify(valueToStore);
+        window.localStorage.setItem(key, serialized);
+        // Dispara evento customizado para sincronizar outras instâncias na mesma aba
+        window.dispatchEvent(
+          new CustomEvent("local-storage-change", {
+            detail: { key, newValue: serialized },
+          })
+        );
       }
     } catch (error) {
       console.warn(`Erro ao salvar a key "${key}" no localStorage:`, error);
     }
   };
 
-  // Sincroniza entre abas
+  // Sincroniza entre abas e dentro da mesma aba
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key === key) {
@@ -38,8 +45,19 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       }
     };
 
+    const handleCustomStorage = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail.key === key) {
+        setStoredValue(detail.newValue ? JSON.parse(detail.newValue) : initialValue);
+      }
+    };
+
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("local-storage-change", handleCustomStorage);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("local-storage-change", handleCustomStorage);
+    };
   }, [key, initialValue]);
 
   return [storedValue, setValue] as const;
