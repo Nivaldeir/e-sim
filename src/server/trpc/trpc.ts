@@ -85,6 +85,20 @@ export const superAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const sessionUser = ctx.session?.user as any;
+  const roles: string[] = sessionUser?.roles || [];
+  const permissions: string[] = sessionUser?.permissions || [];
+  const isAdmin =
+    roles.includes("SUPERADMIN") ||
+    roles.includes("ADMINISTRADOR") ||
+    permissions.includes("admin");
+  if (!isAdmin) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito a administradores" });
+  }
+  return next({ ctx });
+});
+
 export function createPermissionMiddleware(requiredPermission: string) {
   return t.middleware(({ ctx, next }) => {
     if (!ctx.session) {

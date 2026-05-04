@@ -41,10 +41,17 @@ const ensuredBuckets = new Set<string>();
 async function ensureBucket(bucket: string) {
   if (ensuredBuckets.has(bucket)) return;
 
-  const exists = await minioClient.bucketExists(bucket).catch(() => false);
+  let exists: boolean;
+  try {
+    exists = await minioClient.bucketExists(bucket);
+  } catch (err) {
+    throw new Error(
+      `Não foi possível conectar ao MinIO (${MINIO_ENDPOINT}:${MINIO_PORT}). Verifique se o serviço está em execução. Detalhe: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
 
   if (!exists) {
-    await minioClient.makeBucket(bucket, "");
+    await minioClient.makeBucket(bucket);
   }
 
   ensuredBuckets.add(bucket);

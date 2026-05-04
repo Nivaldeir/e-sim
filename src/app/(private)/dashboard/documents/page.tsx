@@ -43,6 +43,7 @@ function DocumentsPageContent() {
     setPage,
     totalPages,
     total,
+    refetch,
   } = useDocumentsPage();
   const [viewMode, setViewMode] = useState<"none" | "group">("none");
 
@@ -159,6 +160,7 @@ function DocumentsPageContent() {
         documents={documents as any}
         groupBy={viewMode === "group" ? "group" : "none"}
         onEditDocument={handleEditDocument}
+        onDeleteDocument={refetch}
       />
 
       {totalPages > 1 && (

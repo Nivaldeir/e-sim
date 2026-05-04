@@ -21,6 +21,8 @@ import { QRCodeViewer } from "@/src/shared/components/global/qr-code-viewer";
 import { GroupQRCodeViewer } from "./group-qr-code-viewer";
 import { DocumentPreviewModal } from "./document-preview-modal";
 import { DocumentExportFactory, type DocumentData } from "@/src/shared/utils/document-export-factory";
+import { usePermissions } from "@/src/shared/hook/use-permissions";
+import { api } from "@/src/shared/context/trpc-context";
 
 export type SavedDocument = {
   id: string;
@@ -77,6 +79,7 @@ interface DocumentListProps {
   documents: SavedDocument[];
   groupBy?: "group" | "none";
   onEditDocument?: (doc: SavedDocument) => void;
+  onDeleteDocument?: () => void;
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -84,12 +87,29 @@ function isValidEmail(s: string) {
   return s.trim().length > 0 && EMAIL_REGEX.test(s.trim());
 }
 
-export function DocumentList({ documents, groupBy = "none", onEditDocument }: DocumentListProps) {
+export function DocumentList({ documents, groupBy = "none", onEditDocument, onDeleteDocument }: DocumentListProps) {
+  const { hasRole, isAdmin } = usePermissions();
+  const canDelete = hasRole("ADMINISTRADOR") || hasRole("SUPERADMIN") || isAdmin();
+  const deleteMutation = api.document.delete.useMutation();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sendingEmails, setSendingEmails] = useState<Record<string, boolean>>({});
   const [previewDoc, setPreviewDoc] = useState<SavedDocument | null>(null);
   const [emailConfirmDoc, setEmailConfirmDoc] = useState<SavedDocument | null>(null);
   const [extraEmails, setExtraEmails] = useState<string[]>([""]);
   const [emailError, setEmailError] = useState<string | null>(null);
+
+  const handleDeleteDocument = async (doc: SavedDocument) => {
+    if (!confirm(`Tem certeza que deseja excluir o documento "${doc.documentTypeName}"? Esta ação não pode ser desfeita.`)) return;
+    setDeletingId(doc.id);
+    try {
+      await deleteMutation.mutateAsync({ id: doc.id });
+      onDeleteDocument?.();
+    } catch (error) {
+      alert("Erro ao excluir documento.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const groupedDocuments = useMemo(() => {
     if (groupBy !== "group") {
@@ -221,21 +241,43 @@ export function DocumentList({ documents, groupBy = "none", onEditDocument }: Do
                 </button>
                 <p className="text-sm text-muted-foreground">{doc.orgaoName}</p>
               </div>
-              {onEditDocument && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditDocument(doc);
-                  }}
-                  title="Editar documento"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </Button>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {onEditDocument && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditDocument(doc);
+                    }}
+                    title="Editar documento"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteDocument(doc);
+                    }}
+                    disabled={deletingId === doc.id}
+                    title="Excluir documento"
+                  >
+                    {deletingId === doc.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Excluir
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 

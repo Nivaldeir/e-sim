@@ -49,7 +49,7 @@ export default function DocumentsCalendarPage() {
     (documents || []).forEach((doc: any) => {
       if (!doc.expirationDate) return;
       const d = new Date(doc.expirationDate as string | Date);
-      const key = d.toISOString().slice(0, 10); // yyyy-mm-dd
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       if (!map[key]) {
         map[key] = [];
       }
@@ -83,7 +83,7 @@ export default function DocumentsCalendarPage() {
       const cellDate = new Date(year, month, dayNumber);
       const inCurrentMonth = cellDate.getMonth() === month;
 
-      const key = cellDate.toISOString().slice(0, 10);
+      const key = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, "0")}-${String(cellDate.getDate()).padStart(2, "0")}`;
       const docs = inCurrentMonth ? documentsByDate[key] || [] : [];
 
       let status: CalendarCellStatus | null = null;
@@ -308,7 +308,7 @@ export default function DocumentsCalendarPage() {
             <CardTitle className="text-base">
               {selectedDateKey
                 ? `Documentos em ${new Date(
-                  selectedDateKey
+                  selectedDateKey + "T12:00:00"
                 ).toLocaleDateString("pt-BR")}`
                 : "Selecione um dia com documentos"}
             </CardTitle>
