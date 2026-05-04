@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
+import { getUserCompanyIds } from "../utils/user-company-scope";
 
 export const fileRouter = router({
   list: protectedProcedure
@@ -10,14 +12,17 @@ export const fileRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const userId = (ctx.session?.user as any)?.id;
-      const isAdmin = (ctx.session?.user as any)?.roles?.includes("ADMINISTRADOR");
+      const companyIds = await getUserCompanyIds(ctx);
 
       const files = await ctx.prisma.file.findMany({
         where: {
           ...(input?.folderId !== undefined && { folderId: input.folderId }),
           ...(input?.documentId && { documentId: input.documentId }),
-          ...(isAdmin ? {} : { createdBy: userId }),
+          OR: [
+            { document: { companyId: { in: companyIds } } },
+            { folder: { companyId: { in: companyIds } } },
+            { documentId: null, folderId: null },
+          ],
         },
         orderBy: { createdAt: "desc" },
         include: {
@@ -37,8 +42,16 @@ export const fileRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const file = await ctx.prisma.file.findUnique({
-        where: { id: input.id },
+      const companyIds = await getUserCompanyIds(ctx);
+
+      const file = await ctx.prisma.file.findFirst({
+        where: {
+          id: input.id,
+          OR: [
+            { document: { companyId: { in: companyIds } } },
+            { folder: { companyId: { in: companyIds } } },
+          ],
+        },
         include: {
           folder: true,
           document: {
@@ -55,7 +68,7 @@ export const fileRouter = router({
       });
 
       if (!file) {
-        throw new Error("Arquivo não encontrado");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Arquivo não encontrado" });
       }
 
       return file;

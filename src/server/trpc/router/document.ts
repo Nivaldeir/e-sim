@@ -168,8 +168,9 @@ export const documentRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const document = await ctx.prisma.document.findUnique({
-        where: { id: input.id },
+      const companyIds = await getUserCompanyIds(ctx);
+      const document = await ctx.prisma.document.findFirst({
+        where: { id: input.id, companyId: { in: companyIds } },
         include: {
           template: {
             include: {
@@ -203,7 +204,7 @@ export const documentRouter = router({
       });
 
       if (!document) {
-        throw new Error("Documento não encontrado");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Documento não encontrado" });
       }
 
       return document;

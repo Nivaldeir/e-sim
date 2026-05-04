@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { getUserCompanyIds } from "../utils/user-company-scope";
 
@@ -81,8 +82,9 @@ export const documentGroupRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const group = await ctx.prisma.documentGroup.findUnique({
-        where: { id: input.id },
+      const companyIds = await getUserCompanyIds(ctx);
+      const group = await ctx.prisma.documentGroup.findFirst({
+        where: { id: input.id, companyId: { in: companyIds } },
         include: {
           documents: {
             take: 10,
@@ -92,7 +94,7 @@ export const documentGroupRouter = router({
       });
 
       if (!group) {
-        throw new Error("Grupo não encontrado");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Grupo não encontrado" });
       }
 
       return group;
