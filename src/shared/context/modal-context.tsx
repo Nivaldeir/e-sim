@@ -28,8 +28,8 @@ export function ModalProvider({ children }: ModalProviderProps) {
           component: component as React.ComponentType<ModalProps<unknown>>,
           props,
           options: {
-            closeOnOverlayClick: true,
-            closeOnEscape: true,
+            closeOnOverlayClick: false,
+            closeOnEscape: false,
             showCloseButton: true,
             size: "md",
             position: "center",
