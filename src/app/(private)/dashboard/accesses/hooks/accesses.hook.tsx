@@ -56,6 +56,7 @@ export function useAccessesPage() {
       AccessFormModal,
       {
         roles: roles || [],
+        companyId: companyIdForQuery,
         onSuccess: () => {
           refetch();
         },
@@ -64,7 +65,7 @@ export function useAccessesPage() {
         size: "md",
       }
     );
-  }, [openModal, roles, refetch]);
+  }, [openModal, roles, companyIdForQuery, refetch]);
 
   const handleEditAccess = useCallback((userId: string) => {
     const user = users?.find((u: any) => u.id === userId);

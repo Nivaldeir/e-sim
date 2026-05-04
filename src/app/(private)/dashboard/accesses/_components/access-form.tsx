@@ -40,6 +40,7 @@ type Role = {
 
 interface AccessFormModalData {
   roles: Role[];
+  companyId?: string;
   onSuccess: () => void;
 }
 
@@ -74,6 +75,8 @@ export function AccessFormModal({ onClose, data }: ModalProps<AccessFormModalDat
     },
   });
 
+  const assignCompanyMutation = api.access.assignCompany.useMutation();
+
   if (!data) return null;
 
   const handleSubmit = async (values: AccessFormValues) => {
@@ -88,6 +91,13 @@ export function AccessFormModal({ onClose, data }: ModalProps<AccessFormModalDat
         await assignRoleMutation.mutateAsync({
           userId: user.id,
           roleId: values.roleId,
+        });
+      }
+
+      if (data.companyId) {
+        await assignCompanyMutation.mutateAsync({
+          userId: user.id,
+          companyId: data.companyId,
         });
       }
 
