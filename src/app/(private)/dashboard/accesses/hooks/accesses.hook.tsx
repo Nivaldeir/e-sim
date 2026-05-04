@@ -12,7 +12,7 @@ import { useCompanyScopeFilter } from "@/src/shared/hook/use-company-scope-filte
 
 export function useAccessesPage() {
   const { openModal } = useModal();
-  const { scope, setScope, selectedCompany, companyIdForQuery } = useCompanyScopeFilter();
+  const { scope, setScope, selectedCompany, selectedCompanyId, companyIdForQuery } = useCompanyScopeFilter();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: users, isLoading, error, refetch } = api.access.listUsers.useQuery(
@@ -56,7 +56,7 @@ export function useAccessesPage() {
       AccessFormModal,
       {
         roles: roles || [],
-        companyId: companyIdForQuery,
+        companyId: selectedCompanyId,
         onSuccess: () => {
           refetch();
         },
@@ -65,7 +65,7 @@ export function useAccessesPage() {
         size: "md",
       }
     );
-  }, [openModal, roles, companyIdForQuery, refetch]);
+  }, [openModal, roles, selectedCompanyId, refetch]);
 
   const handleEditAccess = useCallback((userId: string) => {
     const user = users?.find((u: any) => u.id === userId);

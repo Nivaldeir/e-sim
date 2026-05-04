@@ -25,6 +25,7 @@ import { ModalProps } from "@/src/shared/types/modal";
 import { FileText, Upload, X, Loader2, Plus, Pencil, Lock } from "lucide-react";
 import { api } from "@/src/shared/context/trpc-context";
 import { DateRangePicker } from "@/src/shared/components/global/date-picker";
+import { DateInput } from "@/src/shared/components/global/date-input";
 import { useModal } from "@/src/shared/context/modal-context";
 import { CreateDocumentGroupModal } from "./create-document-group-modal";
 import { EditDocumentGroupModal } from "./edit-document-group-modal";
@@ -131,11 +132,6 @@ export function DocumentFormModal({
     pageSize: 100,
     companyId: selectedCompanyId || undefined,
   });
-  const { data: companiesData, isLoading: companiesLoading } = api.company.list.useQuery({
-    page: 1,
-    pageSize: 100,
-    companyId: selectedCompanyId || undefined,
-  });
   const { data: establishmentsData, isLoading: establishmentsLoading } = api.establishment.list.useQuery({
     page: 1,
     pageSize: 100,
@@ -159,7 +155,6 @@ export function DocumentFormModal({
 
   const templates = templatesData?.templates || [];
   const organizations = orgaosData?.organizations || [];
-  const companies = companiesData?.companies || [];
   const establishments = establishmentsData?.establishments || [];
   const users = usersData || [];
   const groups = groupsData?.groups || [];
@@ -386,7 +381,7 @@ export function DocumentFormModal({
     }
   };
 
-  const isDataLoading = templatesLoading || orgaosLoading || companiesLoading || establishmentsLoading || usersLoading || groupsLoading || (!!data.documentId && documentLoading);
+  const isDataLoading = templatesLoading || orgaosLoading || establishmentsLoading || usersLoading || groupsLoading || (!!data.documentId && documentLoading);
   const isSubmitting = createDocumentMutation.isPending || updateDocumentMutation.isPending || isUploading;
 
   return (
@@ -498,10 +493,9 @@ export function DocumentFormModal({
                   <FormItem className="flex-1 w-full">
                     <FormLabel>Data de expedição</FormLabel>
                     <FormControl>
-                      <DateRangePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        mode="single"
-                        onDateChange={(date) => field.onChange(date ? new Date(date as Date).toISOString() : undefined)}
+                      <DateInput
+                        value={field.value ? field.value.slice(0, 10) : ""}
+                        onChange={(iso) => field.onChange(iso ? iso : "")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -516,10 +510,9 @@ export function DocumentFormModal({
                   <FormItem className="flex-1 w-full">
                     <FormLabel>Data de aviso</FormLabel>
                     <FormControl>
-                      <DateRangePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        mode="single"
-                        onDateChange={(date) => field.onChange(date ? new Date(date as Date).toISOString() : undefined)}
+                      <DateInput
+                        value={field.value ? field.value.slice(0, 10) : ""}
+                        onChange={(iso) => field.onChange(iso ? iso : "")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -534,10 +527,9 @@ export function DocumentFormModal({
                   <FormItem className="flex-1 w-full">
                     <FormLabel>Data de expiração</FormLabel>
                     <FormControl>
-                      <DateRangePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        mode="single"
-                        onDateChange={(date) => field.onChange(date ? new Date(date as Date).toISOString() : undefined)}
+                      <DateInput
+                        value={field.value ? field.value.slice(0, 10) : ""}
+                        onChange={(iso) => field.onChange(iso ? iso : "")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -607,38 +599,7 @@ export function DocumentFormModal({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="companyId"
-                render={({ field }) => (
-                  <FormItem className="flex-1 w-full">
-                    <FormLabel>Empresa</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione a empresa" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {companies.length === 0 ? (
-                          <div className="p-2 text-sm text-muted-foreground text-center">
-                            Nenhuma empresa cadastrada
-                          </div>
-                        ) : (
-                          companies.map((company: any) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
                 name="establishmentId"
@@ -958,10 +919,9 @@ export function DocumentFormModal({
                             </SelectContent>
                           </Select>
                         ) : field.type === "DATE" ? (
-                          <Input
-                            type="date"
+                          <DateInput
                             value={fieldValue}
-                            onChange={(e) => handleChange(e.target.value)}
+                            onChange={handleChange}
                           />
                         ) : field.type === "NUMBER" ? (
                           <Input

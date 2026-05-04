@@ -154,11 +154,18 @@ export const accessRouter = router({
     .use(requireAccessManagement)
     .input(assignRoleInput)
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.userRole.create({
-        data: {
+      return ctx.prisma.userRole.upsert({
+        where: {
+          userId_roleId: {
+            userId: input.userId,
+            roleId: input.roleId,
+          },
+        },
+        create: {
           userId: input.userId,
           roleId: input.roleId,
         },
+        update: {},
         include: {
           role: true,
         },

@@ -392,7 +392,7 @@ export function TemplateFormModal({
                     className="p-4 border rounded-lg space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium text-muted-foreground">
                         Campo {index + 1}
                       </span>
                       <Button
@@ -408,10 +408,10 @@ export function TemplateFormModal({
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-sm font-medium mb-1 block">
-                          Label (exibição)
+                          Nome
                         </label>
                         <Input
-                          placeholder="Nome do Campo"
+                          placeholder="Ex: Nome Completo"
                           value={field.label}
                           onChange={(e) =>
                             updateField(field.id, {
@@ -422,42 +422,6 @@ export function TemplateFormModal({
                         />
                       </div>
 
-                      <div>
-                        <label className="text-sm font-medium mb-1 block text-muted-foreground">
-                          ID
-                        </label>
-                        <Input
-                          value={normalizeFieldName(field.label)}
-                          disabled
-                          className="bg-muted text-muted-foreground"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">
-                        Função de validação
-                      </label>
-                      <Select
-                        value={field.validationRule || "NONE"}
-                        onValueChange={(value) =>
-                          updateField(field.id, { validationRule: value as ValidationRule })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {validationRuleOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-sm font-medium mb-1 block">
                           Tipo
@@ -480,22 +444,41 @@ export function TemplateFormModal({
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
 
-                      <div className="flex items-end">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
+                    <div className="grid grid-cols-2 gap-3 items-end">
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Validação
+                        </label>
+                        <Select
+                          value={field.validationRule || "NONE"}
+                          onValueChange={(value) =>
+                            updateField(field.id, { validationRule: value as ValidationRule })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {validationRuleOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center h-10">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
                             checked={field.required}
-                            onChange={(e) =>
-                              updateField(field.id, {
-                                required: e.target.checked,
-                              })
+                            onCheckedChange={(checked) =>
+                              updateField(field.id, { required: !!checked })
                             }
-                            className="rounded"
                           />
-                          <span className="text-sm font-medium">
-                            Obrigatório
-                          </span>
+                          <span className="text-sm font-medium">Obrigatório</span>
                         </label>
                       </div>
                     </div>
