@@ -65,7 +65,7 @@ export function useDocumentTypesPage() {
   }, [openModal, refetch, companyIdForQuery, selectedCompany]);
 
   const handleEditTemplate = useCallback((templateId: string) => {
-    const template = templates.find((t: any) => t.id === templateId);
+    const template = templates.find((t: any) => t.id === templateId) as any;
     if (!template) return;
 
     openModal(
@@ -77,6 +77,7 @@ export function useDocumentTypesPage() {
           name: template.name,
           description: template.description,
           isDefault: template.isDefault,
+          companyId: template.companyId,
           fields: template.fields || [],
         },
         onSuccess: () => {

@@ -194,9 +194,9 @@ export function OrgaoModal({ onClose, data }: ModalProps<OrgaoModalData>) {
             name="shortName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome curto</FormLabel>
+                <FormLabel>URL do órgão emissor</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: CAIXA" {...field} />
+                  <Input placeholder="Ex: https://www.caixa.gov.br" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -265,80 +265,6 @@ export function OrgaoModal({ onClose, data }: ModalProps<OrgaoModalData>) {
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Endereço</FormLabel>
-                <FormControl>
-                  <Input placeholder="Endereço" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="district"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bairro</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Bairro" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Município</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Município" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>UF</FormLabel>
-                  <FormControl>
-                    <Input placeholder="SP" maxLength={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="zipCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CEP</FormLabel>
-                  <FormControl>
-                    <Input placeholder="00000-000" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           <FormField
             control={form.control}

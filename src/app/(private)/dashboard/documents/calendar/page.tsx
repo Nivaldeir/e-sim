@@ -34,7 +34,7 @@ export default function DocumentsCalendarPage() {
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
   const expiringInput = useMemo(() => {
-    const base = { days: 365, pastDays: 365 };
+    const base = { days: 365, pastDays: 1825 };
     if (scope === "selected" && companyIdForQuery) {
       return { ...base, companyId: companyIdForQuery };
     }
@@ -48,8 +48,10 @@ export default function DocumentsCalendarPage() {
 
     (documents || []).forEach((doc: any) => {
       if (!doc.expirationDate) return;
-      const d = new Date(doc.expirationDate as string | Date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const raw = doc.expirationDate instanceof Date
+        ? doc.expirationDate.toISOString()
+        : String(doc.expirationDate);
+      const key = raw.slice(0, 10);
       if (!map[key]) {
         map[key] = [];
       }
