@@ -1,21 +1,13 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const GMAIL_USER = process.env.GMAIL_USER;
-const GMAIL_APP_PASS = process.env.GMAIL_APP_PASS;
-const EMAIL_TO_RECEIVE = process.env.EMAIL_TO_RECEIVE;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM = process.env.RESEND_FROM || "onboarding@resend.dev";
 
-if (!GMAIL_USER || !GMAIL_APP_PASS) {
-  console.warn("Variáveis de ambiente de email não configuradas");
+if (!RESEND_API_KEY) {
+  console.warn("Variável de ambiente RESEND_API_KEY não configurada");
 }
 
-
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: GMAIL_USER,
-    pass: GMAIL_APP_PASS,
-  },
-});
+export const resend = new Resend(RESEND_API_KEY);
 
 export interface EmailOptions {
   to: string | string[];
@@ -25,23 +17,26 @@ export interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions) {
-  if (!GMAIL_USER || !GMAIL_APP_PASS) {
-    throw new Error("Configuração de email não encontrada");
+  if (!RESEND_API_KEY) {
+    throw new Error("Configuração de email não encontrada (RESEND_API_KEY)");
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: options.from || GMAIL_USER,
-      to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
+    const { data, error } = await resend.emails.send({
+      from: options.from || RESEND_FROM,
+      to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
       html: options.html,
     });
 
-    return info;
+    if (error) {
+      console.error("Erro ao enviar email:", error);
+      throw error;
+    }
+
+    return data;
   } catch (error) {
     console.error("Erro ao enviar email:", error);
     throw error;
   }
 }
-
-
